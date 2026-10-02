@@ -1,0 +1,2 @@
+class OneUtil:
+    pass

@@ -1,0 +1,23 @@
+{
+ "alpha-service": "example-org",
+ "beta-engine": "example-org",
+ "gamma-lib": "example-org",
+ "delta-tools": "example-org",
+ "epsilon-a": "example-org",
+ "epsilon-b": "example-org",
+ "iota-lib": "example-org",
+ "kappa-app": "example-org",
+ "lambda-web": "example-org",
+ "mu-web": "example-org",
+ "nu-empty": "example-org",
+ "xi-one": "example-org",
+ "omicron-two": "example-org",
+ "pi-three": "example-org",
+ "sigma-socket": "example-org",
+ "tau-mono": "example-org",
+ "zeta-one": "example-org",
+ "zeta-two": "example-org",
+ "zeta-three": "example-org",
+ "rho-app": "example-org",
+ "upsilon-fork": "example-org"
+}

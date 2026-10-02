@@ -1,0 +1,7 @@
+[project]
+name = "beta-engine"
+version = "1.0.0"
+requires-python = ">=3.11"
+dependencies = [
+    "gamma-lib @ git+https://github.com/WRONG-ORG/gamma-lib.git@main",
+]

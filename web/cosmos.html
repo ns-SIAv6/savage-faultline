@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Savage Faultline — cyclone</title>
+<style>
+  :root{
+    --gun:#1b2228; --gun2:#12181d; --line:#2e3a42;
+    --seafoam:#64ffda; --seafoam-dim:#2e7d6b;
+    --purple:#b967ff; --purple-dim:#5e3a86;
+    --red:#ff5470; --text:#d7e2e6; --dim:#6d7f88;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--gun);color:var(--text);
+    font:13px/1.5 ui-monospace,"SF Mono",Menlo,monospace;overflow:hidden}
+  #app{display:grid;grid-template-columns:1fr 400px;grid-template-rows:auto 1fr;height:100%}
+  header{grid-column:1/3;display:flex;align-items:baseline;gap:18px;padding:12px 20px;
+    border-bottom:1px solid var(--line);background:var(--gun2);flex-wrap:wrap}
+  header h1{font-size:13px;margin:0;letter-spacing:.26em;font-weight:600;color:var(--seafoam)}
+  header h1 b{color:var(--purple);font-weight:600}
+  .metric{color:var(--dim);font-size:11px;letter-spacing:.06em}
+  .metric b{color:var(--text);font-weight:600}
+  .metric.warn b{color:var(--red)}
+  #spin{margin-left:auto;background:var(--gun);color:var(--seafoam);border:1px solid var(--seafoam-dim);
+    border-radius:5px;padding:5px 12px;font:inherit;font-size:11px;cursor:pointer;letter-spacing:.08em}
+  #spin.anti{color:var(--purple);border-color:var(--purple-dim)}
+  #stage{position:relative;overflow:hidden;
+    background:radial-gradient(ellipse 90% 70% at 50% 42%, #222d34 0%, var(--gun) 70%)}
+  canvas{width:100%;height:100%;display:block}
+  #side{border-left:1px solid var(--line);background:var(--gun2);overflow-y:auto;padding:15px}
+  #side h2{font-size:10.5px;letter-spacing:.18em;color:var(--dim);margin:0 0 9px;font-weight:600}
+  .kv{display:flex;justify-content:space-between;gap:10px;padding:2px 0;font-size:11.5px}
+  .kv .k{color:var(--dim)}
+  .kv .v{text-align:right;color:#e8f1f4}
+  .card{border:1px solid var(--line);border-radius:6px;padding:11px;margin-bottom:12px;background:#161e24}
+  .card.cert{border-color:var(--seafoam-dim);background:#12241f}
+  .card.risk{border-color:var(--red);background:#241016}
+  .card.fork{border-color:var(--purple-dim);background:#1b1524}
+  .w{font-size:10.5px;color:var(--dim);margin-top:3px;word-break:break-all}
+  .w b{color:#9fb3bc;font-weight:500}
+  .lead{color:#9fb3bc;font-size:11.5px;margin:0 0 10px}
+  .hint{position:absolute;left:18px;bottom:14px;color:var(--dim);font-size:11px}
+  ::-webkit-scrollbar{width:9px}::-webkit-scrollbar-thumb{background:#26323a;border-radius:5px}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>SAVAGE <b>FAULTLINE</b> · CYCLONE</h1>
+    <span class="metric">repos <b id="mRepos">–</b></span>
+    <span class="metric">seams <b id="mSeams">–</b></span>
+    <span class="metric warn">critical <b id="mCrit">–</b></span>
+    <span class="metric">forks <b id="mForks">–</b></span>
+    <span class="metric warn">certified <b id="mCert">–</b></span>
+    <button id="spin">CYCLONE ⟳</button>
+  </header>
+  <div id="stage">
+    <canvas id="cv"></canvas>
+    <div class="hint">seafoam = code seam · purple = byte-identical content · red = shared credential · the throat pulls the most-coupled repos down · click any repo</div>
+  </div>
+  <div id="side"><div id="detail"></div></div>
+</div>
+<script>
+"use strict";
+/*
+ * The cyclone is a layout, not a decoration:
+ *   height  = coupling weight (the most-coupled sink to the throat)
+ *   angle   = golden-angle spiral (no two repos share a heading)
+ *   radius  = widens with altitude (the vortex cone)
+ *   spin    = cyclonic (counterclockwise, N hemisphere) or anticyclonic
+ * Every position is a function of the measured model. Nothing is random.
+ */
+let D=null, sel=null, dirn=1, phase=0, last=0;
+const cv=document.getElementById("cv"), ctx=cv.getContext("2d");
+const TILT=0.42;
+
+fetch("../data/viz.json").then(r=>r.json()).then(d=>{D=d;prepare();panel();intro();requestAnimationFrame(tick);});
+
+function weight(r){
+  let w=0;
+  (D.seams||[]).forEach(s=>{if(s.from===r||s.to===r)w+=2;});
+  (D.invisible_coupling||[]).forEach(c=>{if(c.a===r||c.b===r)w+=Math.min(6,c.count);});
+  (D.forks||[]).forEach(f=>{if(f.a===r||f.b===r)w+=f.identical_files>=20?6:3;});
+  return w;
+}
+
+function prepare(){
+  const repos=Object.keys(D.repos);
+  const ranked=repos.slice().sort((a,b)=>weight(b)-weight(a)||a.localeCompare(b));
+  const n=ranked.length, GA=Math.PI*(3-Math.sqrt(5));
+  D._v={};
+  ranked.forEach((r,i)=>{
+    const t=n>1?i/(n-1):0;                    // 0 = throat (most coupled)
+    D._v[r]={t, theta:i*GA,
+             y:1-2*Math.pow(t,0.85),           // throat at bottom
+             rad:0.16+0.84*Math.pow(t,0.9)};   // cone widens toward the rim
+  });
+  D._ranked=ranked;
+}
+
+function project(r, rot){
+  const v=D._v[r];
+  const th=v.theta+rot*dirn;
+  let x=Math.cos(th)*v.rad, z=Math.sin(th)*v.rad, y=v.y;
+  const ct=Math.cos(TILT), st=Math.sin(TILT);
+  const y2=y*ct-z*st, z2=y*st+z*ct;            // tilt the cone toward the eye
+  const f=2.6, s=f/(f+z2+1.2);
+  return {x:x*s, y:y2*s, s, z:z2};
+}
+
+function tick(t){
+  const dt=last?(t-last)/1000:0; last=t;
+  phase+=dt*0.16;                              // stately, not frantic
+  draw();
+  requestAnimationFrame(tick);
+}
+
+function draw(){
+  const W=cv.clientWidth, H=cv.clientHeight, dpr=window.devicePixelRatio||1;
+  if(cv.width!==W*dpr){cv.width=W*dpr;cv.height=H*dpr;}
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,W,H);
+  const cx=W/2, cy=H/2+H*0.03, S=Math.min(W,H)*0.46;
+  const P=r=>{const p=project(r,phase);return{x:cx+p.x*S,y:cy+p.y*S,s:p.s,z:p.z};};
+
+  // cone guides — the vortex itself
+  ctx.strokeStyle="rgba(100,255,218,0.10)";
+  [[0.30,-0.9],[0.62,0.0],[0.97,0.9]].forEach(([rr,yy])=>{
+    ctx.beginPath();
+    for(let a=0;a<=64;a++){
+      const th=a/64*Math.PI*2;
+      const p=(()=>{let x=Math.cos(th)*rr,z=Math.sin(th)*rr,y=yy;
+        const ct=Math.cos(TILT),st=Math.sin(TILT);
+        const y2=y*ct-z*st,z2=y*st+z*ct,f=2.6,s=f/(f+z2+1.2);
+        return{x:cx+x*s*S,y:cy+y2*s*S};})();
+      a?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y);
+    }
+    ctx.closePath();ctx.stroke();
+  });
+
+  const pos={}; Object.keys(D.repos).forEach(r=>pos[r]=P(r));
+  const blast=sel?new Set(((D.blast_radius||{})[sel]||{transitive:[]}).transitive):null;
+
+  function edge(a,b,style,wdt,dash,label){
+    const A=pos[a],B=pos[b]; if(!A||!B)return;
+    const depth=(A.s+B.s)/2;
+    const dim=blast&&!(blast.has(a)||blast.has(b)||a===sel||b===sel);
+    ctx.save();
+    ctx.globalAlpha=(dim?0.05:0.28+0.5*depth);
+    ctx.strokeStyle=style;ctx.lineWidth=wdt*depth+0.4;
+    if(dash)ctx.setLineDash(dash);
+    ctx.beginPath();
+    const mx=(A.x+B.x)/2,my=(A.y+B.y)/2-(14*depth);
+    ctx.moveTo(A.x,A.y);ctx.quadraticCurveTo(mx,my,B.x,B.y);ctx.stroke();
+    ctx.setLineDash([]);
+    if(label&&!dim&&depth>0.86){
+      ctx.fillStyle=style;ctx.font="10px ui-monospace,monospace";ctx.textAlign="center";
+      ctx.fillText(label,mx,my-4);
+    }
+    ctx.restore();
+  }
+
+  (D.invisible_coupling||[]).forEach(c=>{
+    const secret=(c.identifiers||[]).some(i=>/PASSWORD|SECRET|TOKEN|KEY|CREDENTIAL|AUTH/i.test(i));
+    edge(c.a,c.b,secret?"#ff5470":"#b967ff",secret?1.6:0.9,[3,4],
+         secret?c.count+" shared":null);
+  });
+  (D.forks||[]).forEach(f=>{
+    edge(f.a,f.b,"#b967ff",f.verdict==="fork"?2.2:1.1,[9,3,2,3],
+         f.verdict==="fork"?f.identical_files+" identical":null);
+  });
+  (D.seams||[]).forEach(s=>edge(s.from,s.to,"#64ffda",1.1+s.sites*0.35,null,
+                                s.sites+" site"+(s.sites>1?"s":"")));
+
+  // nodes, far to near
+  Object.keys(pos).sort((a,b)=>pos[a].z-pos[b].z).forEach(r=>{
+    const p=pos[r],v=D._v[r];
+    const cert=(D.certificates||[]).some(c=>c.repo===r);
+    const isSel=r===sel, inBlast=blast&&(blast.has(r)||r===sel);
+    const dim=blast&&!inBlast;
+    const base=4+Math.min(9,Math.sqrt(D.repos[r].files)/2.2);
+    const rad=base*p.s*(isSel?1.35:1);
+    ctx.save();
+    ctx.globalAlpha=dim?0.18:0.35+0.65*p.s;
+    if(cert){
+      ctx.strokeStyle="#64ffda";ctx.setLineDash([2,3]);ctx.lineWidth=1.1;
+      ctx.beginPath();ctx.arc(p.x,p.y,rad+2,0,7);ctx.stroke();ctx.setLineDash([]);
+      ctx.fillStyle="rgba(100,255,218,0.12)";
+    }else{
+      ctx.fillStyle=isSel?"#ffffff":inBlast?"#ff5470"
+                   :v.t<0.25?"#64ffda":v.t<0.6?"#4cc9b5":"#3a5f58";
+    }
+    ctx.beginPath();ctx.arc(p.x,p.y,rad,0,7);ctx.fill();
+    if(isSel){ctx.strokeStyle="#fff";ctx.lineWidth=1.6;ctx.stroke();}
+    // labels on the near side only — the far side is the back of the storm
+    if(p.s>0.86||isSel){
+      ctx.fillStyle=dim?"#46545c":cert?"#64ffda":"#cfe3da";
+      ctx.font=(isSel?12:10)+"px ui-monospace,monospace";
+      ctx.textAlign="center";
+      ctx.fillText(r.length>24?r.slice(0,22)+"…":r,p.x,p.y-rad-6);
+    }
+    ctx.restore();
+    pos[r]._hit={x:p.x,y:p.y,rad:Math.max(rad,9)};
+  });
+  cv._pos=pos;
+}
+
+// ---- interaction -----------------------------------------------------------
+cv.addEventListener("click",e=>{
+  const r=cv.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;
+  let best=null,bd=1e9;
+  Object.entries(cv._pos||{}).forEach(([k,p])=>{
+    const d=Math.hypot(p._hit.x-x,p._hit.y-y);
+    if(d<p._hit.rad+4&&d<bd){bd=d;best=k;}
+  });
+  sel=best;best?detail(best):intro();
+});
+
+document.getElementById("spin").addEventListener("click",function(){
+  dirn*=-1;
+  this.textContent=dirn>0?"CYCLONE ⟳":"ANTICYCLONE ⟲";
+  this.classList.toggle("anti",dirn<0);
+});
+
+// ---- side panel -------------------------------------------------------------
+function intro(){
+  const m=D.measured;
+  document.getElementById("detail").innerHTML=`
+    <div class="card cert"><h2 style="color:var(--seafoam)">THE STORM AT A GLANCE</h2>
+      <p class="lead">${m.repos_total} repositories. The throat holds the most-coupled;
+      the rim is proven independent. Click a node to inspect it.</p>
+      <div class="kv"><span class="k">code seams</span><span class="v">${m.seam_count}</span></div>
+      <div class="kv"><span class="k">invisible coupling pairs</span><span class="v">${m.invisible_coupling_pairs}</span></div>
+      <div class="kv"><span class="k">fork pairs</span><span class="v">${m.fork_pairs}</span></div>
+      <div class="kv"><span class="k">certified independent</span><span class="v">${m.certificates}</span></div>
+      <div class="kv"><span class="k">risk</span><span class="v">${
+        Object.entries((D.risk&&D.risk.counts)||{}).map(([k,v])=>v+" "+k).join(" · ")||"—"}</span></div>
+    </div>
+    ${(D.emergent&&D.emergent.length)?`<div class="card">
+      <h2 style="color:var(--purple)">WHAT ONLY THE WHOLE CAN SEE</h2>
+      ${D.emergent.slice(0,5).map(c=>`<div class="w" style="margin-bottom:6px">
+        <b style="color:var(--seafoam)">${c.kind}</b> — ${c.claim}</div>`).join("")}
+      ${D.emergent.length>5?`<div class="w">+ ${D.emergent.length-5} more in the dataset</div>`:""}
+    </div>`:""}
+    `;
+}
+
+function detail(r){
+  const rec=D.repos[r];
+  let h=`<div class="card"><h2>${r}</h2>
+    <div class="kv"><span class="k">files</span><span class="v">${rec.files.toLocaleString()}</span></div>
+    <div class="kv"><span class="k">lines</span><span class="v">${rec.loc.toLocaleString()}</span></div>
+    <div class="kv"><span class="k">languages</span><span class="v">${
+      Object.entries(rec.languages).map(([k,v])=>k+" "+v).join(", ")||"—"}</span></div>
+    <div class="kv"><span class="k">posture</span><span class="v">${(D.posture[r]||{}).regime||"—"}</span></div>
+  </div>`;
+  const cert=(D.certificates||[]).find(c=>c.repo===r);
+  const denied=(D.certificate_denied||[]).find(x=>x.repo===r);
+  if(cert)h+=`<div class="card cert"><h2 style="color:var(--seafoam)">CERTIFIED INDEPENDENT</h2>
+    <p class="lead">No code seam, no shared config, no shared content — all three checks ran.</p></div>`;
+  else if(denied)h+=`<div class="card risk"><h2 style="color:var(--red)">CERTIFICATE DENIED</h2>
+    <p class="lead">${denied.reason}</p></div>`;
+  const rk=((D.risk&&D.risk.register)||[]).filter(x=>x.repos.includes(r)).slice(0,5);
+  if(rk.length){h+=`<div class="card risk"><h2 style="color:var(--red)">RISK</h2>`;
+    rk.forEach(x=>{h+=`<div class="kv"><span class="k">${x.severity}</span><span class="v">${x.kind}</span></div>
+      <div class="w">${x.summary}</div>`;});h+=`</div>`;}
+  const fk=(D.forks||[]).filter(f=>f.a===r||f.b===r);
+  if(fk.length){h+=`<div class="card fork"><h2 style="color:var(--purple)">SHARED CONTENT</h2>`;
+    fk.forEach(f=>{h+=`<div class="kv"><span class="k">${f.a===r?f.b:f.a}</span>
+      <span class="v">${f.identical_files} identical · ${f.pct_of_smaller_repo}%</span></div>`;});h+=`</div>`;}
+  const sm=(D.seams||[]).filter(s=>s.from===r||s.to===r);
+  if(sm.length){h+=`<div class="card"><h2>SEAMS</h2>`;
+    sm.forEach(s=>{h+=`<div class="kv"><span class="k">${s.from===r?"→":"←"} ${
+      s.from===r?s.to:s.from}</span><span class="v">${s.sites} site${s.sites>1?"s":""}</span></div>`;
+      (s.symbols||[]).slice(0,6).forEach(c=>{
+        const d=(c.defined_in||[])[0];
+        h+=`<div class="w"><b>${c.symbol}</b> · ${c.imported_at.file}:${c.imported_at.line}${
+          d?" · defined "+d.file+":"+d.line:" · <span style='color:var(--red)'>defined nowhere</span>"}</div>`;});});
+    h+=`</div>`;}
+  document.getElementById("detail").innerHTML=h;
+}
+
+function panel(){
+  const m=D.measured;
+  mRepos.textContent=m.repos_total; mSeams.textContent=m.seam_count;
+  mCrit.textContent=(D.risk&&D.risk.counts&&D.risk.counts.critical)||0;
+  mForks.textContent=(D.forks||[]).filter(f=>f.verdict==="fork").length;
+  mCert.textContent=m.certificates;
+}
+window.addEventListener("resize",()=>draw());
+</script>
+</body>
+</html>

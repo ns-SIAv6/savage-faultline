@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Savage Faultline</title>
+<style>
+  :root{
+    --bg:#0a0a0a; --panel:#111111; --line:#2a2a2a; --text:#d4d4d0; --dim:#888888;
+    --cert:#4caf7d; --certdim:#14211a;
+    --gold:#c9a84c; --gold-light:#e8c97a;
+    --clandestine:#c9a84c; --library:#e8c97a; --isolated:#333333;
+    --high:#e05555; --medium:#c9a84c; --low:#888888; --blast:#d48ab8; --invis:#e05555;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--text);
+    font:13px/1.5 ui-monospace,"SF Mono",Menlo,monospace;overflow:hidden}
+  #app{display:grid;grid-template-columns:1fr 430px;grid-template-rows:auto 1fr;height:100%}
+  header{grid-column:1/3;display:flex;align-items:baseline;gap:20px;padding:12px 20px;
+    border-bottom:1px solid var(--line);background:var(--panel);flex-wrap:wrap}
+  header h1{font-family:Georgia,'Times New Roman',serif;font-size:15px;margin:0;letter-spacing:.3em;font-weight:700;color:#f5f5f0}
+  .metric{color:var(--dim);font-size:11px;letter-spacing:.06em}
+  .metric b{color:#fff;font-weight:600}
+  .metric.warn b{color:var(--clandestine)}
+  #stage{position:relative;overflow:hidden}
+  svg{width:100%;height:100%;display:block}
+  .node{cursor:pointer}
+  .node text{pointer-events:none;user-select:none}
+  #side{border-left:1px solid var(--line);background:var(--panel);overflow-y:auto;padding:15px}
+  #side h2{font-size:10.5px;letter-spacing:.18em;color:var(--dim);margin:0 0 9px;font-weight:600}
+  .kv{display:flex;justify-content:space-between;gap:10px;padding:2px 0;font-size:11.5px}
+  .kv .k{color:var(--dim)}
+  .kv .v{text-align:right;color:#dbe5ef}
+  .card{border:1px solid var(--line);border-radius:6px;padding:11px;margin-bottom:12px;background:#0d1319}
+  .card.cert{border-color:var(--cert);background:var(--certdim)}
+  header{border-bottom-color:var(--gold)}
+  .card.blast{border-color:var(--blast);background:#1a0f18}
+  .tag{display:inline-block;padding:1px 6px;border-radius:3px;font-size:10px;
+    border:1px solid var(--line);color:#93a5b8;margin:2px 3px 2px 0}
+  .w{font-size:10.5px;color:var(--dim);margin-top:3px;word-break:break-all}
+  .w b{color:#8fa2b5;font-weight:500}
+  .hint{position:absolute;left:18px;bottom:14px;color:var(--dim);font-size:11px}
+  .lead{color:#8fa2b5;font-size:11.5px;margin:0 0 10px}
+  ::-webkit-scrollbar{width:9px}::-webkit-scrollbar-thumb{background:#1e2a37;border-radius:5px}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>SAVAGE <span style="color:var(--gold)">FAULTLINE</span></h1>
+    <span class="metric">repos <b id="mRepos">–</b></span>
+    <span class="metric">seams <b id="mSeams">–</b></span>
+    <span class="metric">symbols crossing <b id="mSym">–</b></span>
+    <span class="metric warn">certified independent <b id="mCert">–</b></span>
+    <span class="metric warn">sharing config <b id="mInvis">–</b></span>
+    <span class="metric">forks <b id="mForks">–</b></span>
+    <span class="metric warn">critical risks <b id="mCrit">–</b></span>
+    <span class="metric">files parsed <b id="mFiles">–</b></span>
+  </header>
+  <div id="stage">
+    <svg id="svg"></svg>
+    <div class="hint" id="hint">gold solid = code seam &nbsp;·&nbsp; gold dashed = byte-identical content &nbsp;·&nbsp; red dashed = shared database, credential or bucket &nbsp;·&nbsp; click any repo</div>
+  </div>
+  <div id="side">
+    <div id="detail"></div>
+  </div>
+</div>
+<script>
+const NS="http://www.w3.org/2000/svg";
+const GOLD="#c9a84c", GOLDL="#e8c97a", GREEN="#54f28a", RED="#e05555", PINK="#d48ab8";
+const REGIME={clandestine:GOLD,library:GOLDL,isolated:"#333333",
+              balanced:GREEN,interdependent:"#b79cf9",phantom:RED};
+const SEV={critical:RED,high:RED,medium:GOLD,low:"#888"};
+let D=null, W=900, H=680, sel=null;
+
+// ---- deterministic geometry. No randomness, no simulation. -------------
+const CORE_R=78, MID_R=196, RING_R=308, CX=0, CY=0;
+
+fetch("../data/viz.json").then(r=>r.json()).then(d=>{
+  D=d; layout(); draw(); panel(); intro();
+});
+
+function layout(){
+  const all=Object.keys(D.repos);
+  const connected=[...new Set(D.seams.flatMap(s=>[s.from,s.to]))].sort();
+  const certified=D.certificates.map(c=>c.repo);
+  const certSet=new Set(certified), connSet=new Set(connected);
+  // no shared code, but joined through a database, credential or bucket —
+  // the repos the code-level picture calls independent and is wrong about
+  const middle=all.filter(r=>!connSet.has(r)&&!certSet.has(r))
+    .sort((a,b)=>(D.repos[b].files-D.repos[a].files)||a.localeCompare(b));
+  const outer=certified.slice()
+    .sort((a,b)=>(D.repos[b].files-D.repos[a].files)||a.localeCompare(b));
+  const pos={};
+  const place=(list,R,ring)=>list.forEach((r,i)=>{
+    const a=-Math.PI/2 + 2*Math.PI*i/Math.max(1,list.length);
+    pos[r]={x:CX+Math.cos(a)*R, y:CY+Math.sin(a)*R, angle:a, ring};
+  });
+  place(connected, CORE_R, "core");
+  place(middle, MID_R, "mid");
+  place(outer, RING_R, "cert");
+  D._pos=pos; D._connected=connected; D._certified=outer; D._middle=middle;
+}
+
+function radius(repo){
+  const f=D.repos[repo].files;
+  return 4 + Math.min(11, Math.sqrt(f)/2.1);   // real file count
+}
+function blastSet(repo){
+  const b=D.blast_radius[repo];
+  return new Set(b?b.transitive:[]);
+}
+
+function draw(){
+  const svg=document.getElementById("svg");
+  if(svg.clientWidth){W=svg.clientWidth;H=svg.clientHeight;}
+  const scale=Math.min(W,H)/(2*(RING_R+175));
+  const ox=W/2, oy=H/2;
+  const X=p=>ox+p.x*scale, Y=p=>oy+p.y*scale;
+  let h="";
+
+  // the certificate ring itself — the visual argument of the whole picture
+  h+=`<circle cx="${ox}" cy="${oy}" r="${RING_R*scale}" fill="none"
+        stroke="#4caf7d" stroke-opacity="0.22" stroke-width="1" stroke-dasharray="2 7"/>`;
+  h+=`<circle cx="${ox}" cy="${oy}" r="${CORE_R*scale}" fill="none"
+        stroke="#c9a84c" stroke-opacity="0.18" stroke-width="1"/>`;
+  h+=`<circle cx="${ox}" cy="${oy}" r="${MID_R*scale}" fill="none"
+        stroke="#e05555" stroke-opacity="0.16" stroke-width="1" stroke-dasharray="1 6"/>`;
+
+  const blast = sel ? blastSet(sel) : null;
+
+  // seams
+  D.seams.forEach(s=>{
+    const a=D._pos[s.from], b=D._pos[s.to];
+    if(!a||!b) return;
+    const x1=X(a),y1=Y(a),x2=X(b),y2=Y(b);
+    const mx=(x1+x2)/2,my=(y1+y2)/2,dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy)||1;
+    const bow=0.34*L,nx=-dy/L,ny=dx/L;
+    const dim = blast && !(blast.has(s.from)||blast.has(s.to));
+    const w=(1.6+s.sites*0.9)*Math.max(scale,0.8);
+    h+=`<path d="M${x1},${y1} Q${mx+nx*bow},${my+ny*bow} ${x2},${y2}" fill="none"
+      stroke="#c9a84c" stroke-width="${w}" opacity="${dim?0.15:0.85}"/>`;
+    if(!dim) h+=`<text x="${mx+nx*bow}" y="${my+ny*bow-6}" fill="#c9a84c"
+      font-size="10" text-anchor="middle">${s.sites} site${s.sites>1?"s":""}</text>`;
+  });
+
+  // coupling that is not an import — threads between repos that look separate
+  (D.invisible_coupling||[]).forEach(c=>{
+    const a=D._pos[c.a], b=D._pos[c.b];
+    if(!a||!b) return;
+    const x1=X(a),y1=Y(a),x2=X(b),y2=Y(b);
+    const mx=(x1+x2)/2,my=(y1+y2)/2,dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy)||1;
+    const bow=-0.16*L,nx=-dy/L,ny=dx/L;
+    const hot = blast && (blast.has(c.a)||blast.has(c.b)||c.a===sel||c.b===sel);
+    const dimEdge = blast && !(blast.has(c.a)||blast.has(c.b)||c.a===sel||c.b===sel);
+    h+=`<path d="M${x1},${y1} Q${mx+nx*bow},${my+ny*bow} ${x2},${y2}" fill="none"
+      stroke="#e05555" stroke-width="${hot?2.4:1.3}" stroke-dasharray="4 4"
+      opacity="${dimEdge?0.05:hot?0.95:0.55}"/>`;
+    if(hot) h+=`<text x="${mx+nx*bow}" y="${my+ny*bow+13}" fill="#e05555"
+      font-size="10" text-anchor="middle">${c.count} shared</text>`;
+  });
+
+  // shared content — copies of each other, the gold dashed arcs
+  (D.forks||[]).forEach(f=>{
+    const a=D._pos[f.a], b=D._pos[f.b];
+    if(!a||!b) return;
+    const x1=X(a),y1=Y(a),x2=X(b),y2=Y(b);
+    const mx=(x1+x2)/2,my=(y1+y2)/2,dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy)||1;
+    const bow=0.22*L,nx=-dy/L,ny=dx/L;
+    const dim = blast && !(blast.has(f.a)||blast.has(f.b)||f.a===sel||f.b===sel);
+    const big = f.verdict==="fork";
+    h+=`<path d="M${x1},${y1} Q${mx+nx*bow},${my+ny*bow} ${x2},${y2}" fill="none"
+      stroke="#c9a84c" stroke-width="${big?2.2:1.1}" stroke-dasharray="9 3 2 3"
+      opacity="${dim?0.06:big?0.85:0.45}"/>`;
+    if(big&&!dim) h+=`<text x="${mx+nx*bow}" y="${my+ny*bow-8}" fill="#c9a84c"
+      font-size="10" text-anchor="middle">${f.identical_files} identical files</text>`;
+  });
+
+  // nodes
+  Object.entries(D._pos).forEach(([r,p])=>{
+    const x=X(p),y=Y(p),rad=radius(r)*Math.max(scale,0.75);
+    const reg=D.posture[r]?D.posture[r].regime:"isolated";
+    const col=REGIME[reg]||"#5b6b7d";
+    const isCert=p.ring==="cert";
+    const isMid=p.ring==="mid";
+    const inBlast = blast && (blast.has(r)||r===sel);
+    const dim = blast && !inBlast;
+    const isSel = r===sel;
+    const stroke = isSel ? "#fff" : inBlast ? PINK
+                 : isCert ? "#4caf7d" : isMid ? RED : col;
+    h+=`<circle cx="${x}" cy="${y}" r="${rad}" fill="${isCert?"none":col}"
+      fill-opacity="${dim?0.06:isMid?0.35:0.85}" stroke="${stroke}"
+      stroke-width="${isSel?2.2:isCert?1.1:isMid?1.4:1.5}" opacity="${dim?0.30:1}"
+      ${isCert?'stroke-dasharray="2 3"':''} data-repo="${r}" class="node"/>`;
+    const flip=Math.cos(p.angle)<0;
+    const deg=p.angle*180/Math.PI;
+    const fs=isCert?9.5:isMid?10:11;
+    const label = r.length>22 ? r.slice(0,21)+"\u2026" : r;
+    h+=`<text font-size="${fs}" fill="${dim?"#3a4553":isCert?"#6f8a7c":"#fff"}"
+      dominant-baseline="middle"
+      transform="translate(${x},${y}) rotate(${flip?deg+180:deg}) translate(${rad+7},0)"
+      text-anchor="${flip?"end":"start"}"><title>${r}</title>${label}</text>`;
+  });
+
+  svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
+  svg.innerHTML=h;
+  svg.querySelectorAll("[data-repo]").forEach(el=>{
+    el.addEventListener("click",()=>{sel=el.dataset.repo;draw();detail(sel);});
+    el.addEventListener("mouseenter",()=>detail(el.dataset.repo,true));
+    el.addEventListener("mouseleave",()=>{ if(sel) detail(sel); else intro(); });
+  });
+}
+
+// ---- side panel ---------------------------------------------------------
+function intro(){
+  const m=D.measured;
+  document.getElementById("detail").innerHTML=`
+    <div class="card cert">
+      <h2 style="color:#4ade80;margin-bottom:6px">ISOLATION CERTIFICATE</h2>
+      <p class="lead">${m.certificates} of ${m.repos_total} repositories carry a
+      verified certificate of independence — no shared code <em>and</em> no shared
+      database, credential or bucket.</p>
+      <div class="kv"><span class="k">denied on operational grounds</span>
+        <span class="v" style="color:#ff4d6d">${m.certificate_denied||0}</span></div>
+      <div class="kv"><span class="k">certified repos</span><span class="v">${m.certificates}</span></div>
+      <div class="kv"><span class="k">files examined</span><span class="v">${
+        D.certificates.reduce((a,c)=>a+c.files_parsed,0).toLocaleString()}</span></div>
+      <div class="kv"><span class="k">imports examined</span><span class="v">${
+        D.certificates.reduce((a,c)=>a+c.imports_examined,0).toLocaleString()}</span></div>
+      <div class="kv"><span class="k">crossings found</span><span class="v">0</span></div>
+      <div class="w" style="margin-top:8px">Scope: ${D.certificates[0]?D.certificates[0].scope:""}</div>
+    </div>
+    <div class="card">
+      <h2>MEASURED</h2>
+      <div class="kv"><span class="k">repositories</span><span class="v">${m.repos_total}</span></div>
+      <div class="kv"><span class="k">with any seam</span><span class="v">${m.repos_with_seams}</span></div>
+      <div class="kv"><span class="k">seams</span><span class="v">${m.seam_count}</span></div>
+      <div class="kv"><span class="k">import sites</span><span class="v">${m.import_sites}</span></div>
+      <div class="kv"><span class="k">symbols crossing</span><span class="v">${m.symbols_crossing}</span></div>
+      <div class="kv"><span class="k">findings</span><span class="v">${D.findings.length}</span></div>
+      <div class="kv"><span class="k">fork pairs</span><span class="v">${(D.forks||[]).length}</span></div>
+      <div class="kv"><span class="k">emergent claims</span><span class="v">${(D.emergent||[]).length}</span></div>
+      <div class="kv"><span class="k">risk</span><span class="v">${
+        Object.entries((D.risk&&D.risk.counts)||{}).map(([k,v])=>v+" "+k).join(" · ")||"—"}</span></div>
+    </div>
+    ${(D.emergent&&D.emergent.length)?`<div class="card" style="border-color:var(--gold);background:#191408">
+      <h2 style="color:var(--gold)">WHAT ONLY THE WHOLE CAN SEE</h2>
+      ${D.emergent.slice(0,4).map(c=>`<div class="w" style="margin-bottom:5px">
+        <b>${c.kind}</b> — ${c.claim}</div>`).join("")}
+    </div>`:""}
+    `;
+}
+function detail(repo, peek){
+  const rec=D.repos[repo], p=D.posture[repo]||{};
+  const cert=D.certificates.find(c=>c.repo===repo);
+  const blast=D.blast_radius[repo];
+  const seams=D.seams.filter(s=>s.from===repo||s.to===repo);
+  let h="";
+  const denied=(D.certificate_denied||[]).find(x=>x.repo===repo);
+  if(denied && !cert){
+    h+=`<div class="card" style="border-color:#ff4d6d;background:#1c0d12">
+      <h2 style="color:#ff4d6d">CERTIFICATE DENIED</h2>
+      <p class="lead">${repo} shares no code with any other repository, but it is
+      not independent: ${denied.reason}.</p></div>`;
+  }
+  if(cert){
+    h+=`<div class="card cert">
+      <h2 style="color:#4ade80">ISOLATION CERTIFICATE</h2>
+      <p class="lead">${repo} has no code-level dependency on any other repository
+      in this ecosystem, in either direction.</p>
+      <div class="kv"><span class="k">files parsed</span><span class="v">${cert.files_parsed.toLocaleString()}</span></div>
+      <div class="kv"><span class="k">imports examined</span><span class="v">${cert.imports_examined.toLocaleString()}</span></div>
+      <div class="kv"><span class="k">cross-repo out</span><span class="v">${cert.cross_repo_out}</span></div>
+      <div class="kv"><span class="k">cross-repo in</span><span class="v">${cert.cross_repo_in}</span></div>
+      <div class="kv"><span class="k">third-party packages</span><span class="v">${cert.external_packages}</span></div>
+      <div class="w" style="margin-top:8px">Scope: ${cert.scope}</div>
+    </div>`;
+  }
+  h+=`<div class="card${blast&&blast.count?' blast':''}">
+    <h2${blast&&blast.count?' style="color:#ff7ad9"':''}>${repo}</h2>
+    <div class="kv"><span class="k">files</span><span class="v">${rec.files.toLocaleString()}</span></div>
+    <div class="kv"><span class="k">lines of code</span><span class="v">${rec.loc.toLocaleString()}</span></div>
+    <div class="kv"><span class="k">languages</span><span class="v">${
+      Object.entries(rec.languages).map(([k,v])=>k+" "+v).join(", ")||"—"}</span></div>
+    <div class="kv"><span class="k">package name</span><span class="v">${rec.package_name||"—"}</span></div>
+    <div class="kv"><span class="k">declared deps</span><span class="v">${rec.declared_dependencies.length}</span></div>
+    <div class="kv"><span class="k">third-party pkgs</span><span class="v">${rec.external_package_count}</span></div>
+    <div class="kv"><span class="k">posture</span><span class="v" style="color:${REGIME[p.regime]||'#5b6b7d'}">${p.regime||"—"}</span></div>
+    <div class="kv"><span class="k">code out / in</span><span class="v">${p.code_out??0} / ${p.code_in??0}</span></div>
+    <div class="kv"><span class="k">declared out / in</span><span class="v">${p.declared_out??0} / ${p.declared_in??0}</span></div>
+  </div>`;
+
+  if(blast && (blast.count||blast.direct.length)){
+    h+=`<div class="card blast">
+      <h2 style="color:#ff7ad9">BLAST RADIUS</h2>
+      <p class="lead">If ${repo} changes, ${blast.count===1?"1 repository breaks":blast.count+" repositories break"}.</p>
+      ${blast.transitive.map(r=>`<div class="kv"><span class="k">breaks</span><span class="v">${r}</span></div>`).join("")}
+    </div>`;
+  } else if(!cert){
+    h+=`<div class="card"><h2>BLAST RADIUS</h2>
+      <p class="lead">Nothing in this ecosystem depends on ${repo}.</p>
+      <div class="kv"><span class="k">blast radius</span><span class="v">0</span></div></div>`;
+  }
+
+  const invis=(D.invisible_coupling||[]).filter(c=>c.a===repo||c.b===repo);
+  if(invis.length){
+    h+=`<div class="card" style="border-color:#ff4d6d;background:#1c0d12">
+      <h2 style="color:#ff4d6d">INVISIBLE COUPLING</h2>
+      <p class="lead">No shared code — but these repositories share live
+      configuration with ${repo}.</p>`;
+    invis.forEach(c=>{
+      const other=c.a===repo?c.b:c.a;
+      h+=`<div class="kv"><span class="k">${other}</span><span class="v">${c.count} shared</span></div>`;
+      h+=`<div class="w">${c.identifiers.slice(0,10).join(", ")}</div>`;
+      c.witnesses.slice(0,3).forEach(w=>{
+        if(w.at) h+=`<div class="w"><b>${w.identifier}</b> · ${w.at.file}:${w.at.line}</div>`;
+      });
+    });
+    h+=`</div>`;
+  }
+  const fk=(D.forks||[]).filter(f=>f.a===repo||f.b===repo);
+  if(fk.length){
+    h+=`<div class="card" style="border-color:${GOLD};background:#191408">
+      <h2 style="color:${GOLD}">SHARED CONTENT</h2>
+      <p class="lead">Byte-identical files live in both places. The copies will drift.</p>`;
+    fk.forEach(f=>{
+      const other=f.a===repo?f.b:f.a;
+      h+=`<div class="kv"><span class="k">${other}</span>
+          <span class="v">${f.identical_files} identical · ${f.pct_of_smaller_repo}% · ${f.verdict}</span></div>`;
+      f.witnesses.slice(0,4).forEach(w=>{
+        h+=`<div class="w"><b>${w.suffix}</b> · here ${f.a===repo?w.a_path:w.b_path}</div>`;
+      });
+    });
+    h+=`</div>`;
+  }
+  const rk=((D.risk&&D.risk.register)||[]).filter(r=>r.repos.includes(repo)).slice(0,6);
+  if(rk.length){
+    h+=`<div class="card"><h2>RISK REGISTER</h2>`;
+    rk.forEach(r=>{
+      h+=`<div class="kv"><span class="k" style="color:${SEV[r.severity]}">${r.severity}</span>
+          <span class="v">${r.kind}</span></div>
+          <div class="w">${r.summary}</div>`;
+    });
+    h+=`</div>`;
+  }
+  if(seams.length){
+    h+=`<div class="card"><h2>SEAMS — EVERY CLAIM CARRIES ITS WITNESS</h2>`;
+    seams.forEach(s=>{
+      h+=`<div class="kv"><span class="k">${s.from===repo?"→":"←"} ${s.from===repo?s.to:s.from}</span>
+          <span class="v">${s.sites} site${s.sites>1?"s":""}</span></div>`;
+      s.symbols.forEach(c=>{
+        const d=c.defined_in[0];
+        h+=`<div class="w"><b>${c.symbol}</b> · imported ${c.imported_at.file}:${c.imported_at.line}
+            · defined ${d?d.file+":"+d.line:"<span style='color:#ff5c5c'>nowhere</span>"}</div>`;
+      });
+    });
+    h+=`</div>`;
+  }
+  if(!peek) document.getElementById("detail").innerHTML=h;
+  else document.getElementById("detail").innerHTML=h;
+}
+function panel(){
+  const m=D.measured;
+  mRepos.textContent=m.repos_total;
+  mSeams.textContent=m.seam_count;
+  mSym.textContent=m.symbols_crossing;
+  mCert.textContent=m.certificates;
+  mInvis.textContent=new Set((D.invisible_coupling||[]).flatMap(c=>[c.a,c.b])).size;
+  mForks.textContent=(D.forks||[]).filter(f=>f.verdict==="fork").length;
+  mCrit.textContent=(D.risk&&D.risk.counts&&D.risk.counts.critical)||0;
+  mFiles.textContent=Object.values(D.repos).reduce((a,r)=>a+r.files,0).toLocaleString();
+}
+window.addEventListener("resize",()=>{draw();});
+</script>
+</body>
+</html>

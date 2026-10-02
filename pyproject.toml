@@ -1,0 +1,23 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "savage-faultline"
+version = "0.1.0"
+description = "Savage Faultline — cross-repository coupling analysis. Maps what repositories do to each other, and proves which are safe to archive."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+dependencies = []
+
+[project.scripts]
+faultline = "faultline.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["faultline"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# the fixture is synthetic source code under analysis, not tests of our own
+norecursedirs = ["tests/fixture", ".*", "build", "dist", "*.egg", "venv"]

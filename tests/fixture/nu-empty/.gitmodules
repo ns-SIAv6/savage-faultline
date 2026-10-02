@@ -1,0 +1,3 @@
+[submodule "delta-tools"]
+	path = delta-tools
+	url = https://github.com/example-org/delta-tools.git

@@ -1,0 +1,4 @@
+[project]
+name = "pi-three"
+version = "1.0.0"
+dependencies = []

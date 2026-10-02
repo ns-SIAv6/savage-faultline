@@ -1,0 +1,4 @@
+[project]
+name = "zeta-two"
+version = "1.0.0"
+dependencies = ["zeta-three"]

@@ -1,0 +1,795 @@
+{
+ "alpha-service": [
+  {
+   "repo": "alpha-service",
+   "path": "src/alpha/__init__.py",
+   "lang": "python",
+   "dotted": "src.alpha",
+   "imports": [],
+   "symbols": [],
+   "loc": 0
+  },
+  {
+   "repo": "alpha-service",
+   "path": "src/alpha/core.py",
+   "lang": "python",
+   "dotted": "src.alpha.core",
+   "imports": [
+    {
+     "module": "beta.engine",
+     "names": [
+      "Runner"
+     ],
+     "level": 0,
+     "line": 1
+    },
+    {
+     "module": "beta.ghost",
+     "names": [
+      "MissingThing"
+     ],
+     "level": 0,
+     "line": 2
+    },
+    {
+     "module": "common.util",
+     "names": [
+      "Thing"
+     ],
+     "level": 0,
+     "line": 3
+    }
+   ],
+   "symbols": [
+    {
+     "name": "boot",
+     "line": 6,
+     "doc": ""
+    }
+   ],
+   "loc": 7
+  },
+  {
+   "repo": "alpha-service",
+   "path": "src/common/__init__.py",
+   "lang": "python",
+   "dotted": "src.common",
+   "imports": [],
+   "symbols": [],
+   "loc": 0
+  },
+  {
+   "repo": "alpha-service",
+   "path": "src/common/util.py",
+   "lang": "python",
+   "dotted": "src.common.util",
+   "imports": [],
+   "symbols": [
+    {
+     "name": "Thing",
+     "line": 1,
+     "doc": ""
+    }
+   ],
+   "loc": 2
+  }
+ ],
+ "beta-engine": [
+  {
+   "repo": "beta-engine",
+   "path": "src/beta/__init__.py",
+   "lang": "python",
+   "dotted": "src.beta",
+   "imports": [],
+   "symbols": [],
+   "loc": 0
+  },
+  {
+   "repo": "beta-engine",
+   "path": "src/beta/engine.py",
+   "lang": "python",
+   "dotted": "src.beta.engine",
+   "imports": [
+    {
+     "module": "common.util",
+     "names": [
+      "Other"
+     ],
+     "level": 0,
+     "line": 1
+    }
+   ],
+   "symbols": [
+    {
+     "name": "Runner",
+     "line": 4,
+     "doc": "Exists. beta.ghost deliberately does not."
+    }
+   ],
+   "loc": 6
+  },
+  {
+   "repo": "beta-engine",
+   "path": "src/common/__init__.py",
+   "lang": "python",
+   "dotted": "src.common",
+   "imports": [],
+   "symbols": [],
+   "loc": 0
+  },
+  {
+   "repo": "beta-engine",
+   "path": "src/common/util.py",
+   "lang": "python",
+   "dotted": "src.common.util",
+   "imports": [],
+   "symbols": [
+    {
+     "name": "Other",
+     "line": 1,
+     "doc": ""
+    }
+   ],
+   "loc": 2
+  }
+ ],
+ "delta-tools": [
+  {
+   "repo": "delta-tools",
+   "path": "app/build.gradle.kts",
+   "lang": "jvm",
+   "dotted": "app.build.gradle",
+   "imports": [],
+   "symbols": [],
+   "loc": 3
+  },
+  {
+   "repo": "delta-tools",
+   "path": "src/delta/__init__.py",
+   "lang": "python",
+   "dotted": "src.delta",
+   "imports": [],
+   "symbols": [],
+   "loc": 0
+  },
+  {
+   "repo": "delta-tools",
+   "path": "src/delta/main.py",
+   "lang": "python",
+   "dotted": "src.delta.main",
+   "imports": [],
+   "symbols": [
+    {
+     "name": "standalone",
+     "line": 1,
+     "doc": ""
+    }
+   ],
+   "loc": 2
+  },
+  {
+   "repo": "delta-tools",
+   "path": "tests/test_main.py",
+   "lang": "python",
+   "dotted": "tests.test_main",
+   "imports": [
+    {
+     "module": "pytest",
+     "names": [],
+     "level": 0,
+     "line": 1
+    },
+    {
+     "module": "delta.main",
+     "names": [
+      "standalone"
+     ],
+     "level": 0,
+     "line": 2
+    }
+   ],
+   "symbols": [],
+   "loc": 2
+  }
+ ],
+ "epsilon-a": [
+  {
+   "repo": "epsilon-a",
+   "path": "src/epsilon_a/__init__.py",
+   "lang": "python",
+   "dotted": "src.epsilon_a",
+   "imports": [],
+   "symbols": [],
+   "loc": 0
+  },
+  {
+   "repo": "epsilon-a",
+   "path": "src/epsilon_a/a.py",
+   "lang": "python",
+   "dotted": "src.epsilon_a.a",
+   "imports": [
+    {
+     "module": "epsilon_b.b",
+     "names": [
+      "BThing"
+     ],
+     "level": 0,
+     "line": 1
+    }
+   ],
+   "symbols": [
+    {
+     "name": "AThing",
+     "line": 4,
+     "doc": ""
+    }
+   ],
+   "loc": 5
+  }
+ ],
+ "epsilon-b": [
+  {
+   "repo": "epsilon-b",
+   "path": "src/epsilon_b/__init__.py",
+   "lang": "python",
+   "dotted": "src.epsilon_b",
+   "imports": [],
+   "symbols": [],
+   "loc": 0
+  },
+  {
+   "repo": "epsilon-b",
+   "path": "src/epsilon_b/b.py",
+   "lang": "python",
+   "dotted": "src.epsilon_b.b",
+   "imports": [
+    {
+     "module": "epsilon_a.a",
+     "names": [
+      "AThing"
+     ],
+     "level": 0,
+     "line": 1
+    }
+   ],
+   "symbols": [
+    {
+     "name": "BThing",
+     "line": 4,
+     "doc": ""
+    }
+   ],
+   "loc": 5
+  }
+ ],
+ "gamma-lib": [
+  {
+   "repo": "gamma-lib",
+   "path": "src/index.js",
+   "lang": "js",
+   "dotted": "src.index",
+   "imports": [],
+   "symbols": [
+    {
+     "name": "helper",
+     "line": 1,
+     "doc": ""
+    },
+    {
+     "name": "unusedHelper",
+     "line": 2,
+     "doc": ""
+    }
+   ],
+   "loc": 2
+  }
+ ],
+ "iota-lib": [
+  {
+   "repo": "iota-lib",
+   "path": "types.py",
+   "lang": "python",
+   "dotted": "types",
+   "imports": [],
+   "symbols": [
+    {
+     "name": "LocalTypes",
+     "line": 1,
+     "doc": ""
+    }
+   ],
+   "loc": 2
+  }
+ ],
+ "kappa-app": [
+  {
+   "repo": "kappa-app",
+   "path": "src/kappa/__init__.py",
+   "lang": "python",
+   "dotted": "src.kappa",
+   "imports": [],
+   "symbols": [],
+   "loc": 0
+  },
+  {
+   "repo": "kappa-app",
+   "path": "src/kappa/main.py",
+   "lang": "python",
+   "dotted": "src.kappa.main",
+   "imports": [
+    {
+     "module": "os",
+     "names": [],
+     "level": 0,
+     "line": 1
+    },
+    {
+     "module": "types",
+     "names": [],
+     "level": 0,
+     "line": 2
+    }
+   ],
+   "symbols": [
+    {
+     "name": "go",
+     "line": 7,
+     "doc": ""
+    }
+   ],
+   "loc": 8
+  }
+ ],
+ "lambda-web": [
+  {
+   "repo": "lambda-web",
+   "path": "vite.config.ts",
+   "lang": "js",
+   "dotted": "vite.config",
+   "imports": [],
+   "symbols": [],
+   "loc": 1
+  },
+  {
+   "repo": "lambda-web",
+   "path": "src/state.ts",
+   "lang": "js",
+   "dotted": "src.state",
+   "imports": [
+    {
+     "module": "zustand",
+     "names": [
+      "create"
+     ],
+     "level": 0,
+     "line": 1
+    }
+   ],
+   "symbols": [
+    {
+     "name": "useStore",
+     "line": 2,
+     "doc": ""
+    }
+   ],
+   "loc": 2
+  }
+ ],
+ "mu-web": [
+  {
+   "repo": "mu-web",
+   "path": "src/main.ts",
+   "lang": "js",
+   "dotted": "src.main",
+   "imports": [
+    {
+     "module": "vite",
+     "names": [
+      "defineConfig"
+     ],
+     "level": 0,
+     "line": 1
+    },
+    {
+     "module": "node:assert",
+     "names": [
+      "assert"
+     ],
+     "level": 0,
+     "line": 2
+    },
+    {
+     "module": "zustand",
+     "names": [
+      "create"
+     ],
+     "level": 0,
+     "line": 3
+    },
+    {
+     "module": "socket.io-client",
+     "names": [
+      "io"
+     ],
+     "level": 0,
+     "line": 4
+    },
+    {
+     "module": "gamma-lib",
+     "names": [
+      "helper"
+     ],
+     "level": 0,
+     "line": 6
+    }
+   ],
+   "symbols": [],
+   "loc": 11
+  }
+ ],
+ "nu-empty": [],
+ "omicron-two": [
+  {
+   "repo": "omicron-two",
+   "path": "shared/__init__.py",
+   "lang": "python",
+   "dotted": "shared",
+   "imports": [],
+   "symbols": [],
+   "loc": 0
+  },
+  {
+   "repo": "omicron-two",
+   "path": "shared/util.py",
+   "lang": "python",
+   "dotted": "shared.util",
+   "imports": [],
+   "symbols": [
+    {
+     "name": "TwoUtil",
+     "line": 1,
+     "doc": ""
+    }
+   ],
+   "loc": 2
+  }
+ ],
+ "pi-three": [
+  {
+   "repo": "pi-three",
+   "path": "src/pi/__init__.py",
+   "lang": "python",
+   "dotted": "src.pi",
+   "imports": [],
+   "symbols": [],
+   "loc": 0
+  },
+  {
+   "repo": "pi-three",
+   "path": "src/pi/app.py",
+   "lang": "python",
+   "dotted": "src.pi.app",
+   "imports": [
+    {
+     "module": "shared.util",
+     "names": [
+      "OneUtil"
+     ],
+     "level": 0,
+     "line": 1
+    }
+   ],
+   "symbols": [],
+   "loc": 1
+  }
+ ],
+ "rho-app": [
+  {
+   "repo": "rho-app",
+   "path": "src/rho/__init__.py",
+   "lang": "python",
+   "dotted": "src.rho",
+   "imports": [],
+   "symbols": [],
+   "loc": 0
+  },
+  {
+   "repo": "rho-app",
+   "path": "src/rho/core.py",
+   "lang": "python",
+   "dotted": "src.rho.core",
+   "imports": [],
+   "symbols": [
+    {
+     "name": "normalise",
+     "line": 1,
+     "doc": "Lowercase keys, drop empties, sort by id."
+    }
+   ],
+   "loc": 8
+  },
+  {
+   "repo": "rho-app",
+   "path": "src/rho/main.py",
+   "lang": "python",
+   "dotted": "src.rho.main",
+   "imports": [],
+   "symbols": [
+    {
+     "name": "Orchestrator",
+     "line": 1,
+     "doc": "Drives the pipeline: load, transform, persist, report."
+    }
+   ],
+   "loc": 10
+  },
+  {
+   "repo": "rho-app",
+   "path": "src/rho/util.py",
+   "lang": "python",
+   "dotted": "src.rho.util",
+   "imports": [
+    {
+     "module": "hashlib",
+     "names": [],
+     "level": 0,
+     "line": 1
+    }
+   ],
+   "symbols": [
+    {
+     "name": "fingerprint",
+     "line": 4,
+     "doc": "Stable content hash for dedupe across runs."
+    }
+   ],
+   "loc": 7
+  }
+ ],
+ "sigma-socket": [
+  {
+   "repo": "sigma-socket",
+   "path": "index.js",
+   "lang": "js",
+   "dotted": "index",
+   "imports": [],
+   "symbols": [
+    {
+     "name": "socket",
+     "line": 1,
+     "doc": ""
+    }
+   ],
+   "loc": 1
+  }
+ ],
+ "tau-mono": [
+  {
+   "repo": "tau-mono",
+   "path": "packages/web/index.js",
+   "lang": "js",
+   "dotted": "packages.web.index",
+   "imports": [
+    {
+     "module": "gamma-lib",
+     "names": [
+      "helper"
+     ],
+     "level": 0,
+     "line": 1
+    }
+   ],
+   "symbols": [],
+   "loc": 2
+  }
+ ],
+ "upsilon-fork": [
+  {
+   "repo": "upsilon-fork",
+   "path": "extra.py",
+   "lang": "python",
+   "dotted": "extra",
+   "imports": [],
+   "symbols": [
+    {
+     "name": "only_here",
+     "line": 1,
+     "doc": ""
+    }
+   ],
+   "loc": 2
+  },
+  {
+   "repo": "upsilon-fork",
+   "path": "deep/nested/rho/__init__.py",
+   "lang": "python",
+   "dotted": "deep.nested.rho",
+   "imports": [],
+   "symbols": [],
+   "loc": 1
+  },
+  {
+   "repo": "upsilon-fork",
+   "path": "deep/nested/rho/core.py",
+   "lang": "python",
+   "dotted": "deep.nested.rho.core",
+   "imports": [],
+   "symbols": [
+    {
+     "name": "normalise",
+     "line": 1,
+     "doc": "Lowercase keys, drop empties, sort by id."
+    }
+   ],
+   "loc": 8
+  },
+  {
+   "repo": "upsilon-fork",
+   "path": "deep/nested/rho/main.py",
+   "lang": "python",
+   "dotted": "deep.nested.rho.main",
+   "imports": [],
+   "symbols": [
+    {
+     "name": "Orchestrator",
+     "line": 1,
+     "doc": "Drives the pipeline: load, transform, persist, report."
+    }
+   ],
+   "loc": 10
+  },
+  {
+   "repo": "upsilon-fork",
+   "path": "deep/nested/rho/util.py",
+   "lang": "python",
+   "dotted": "deep.nested.rho.util",
+   "imports": [
+    {
+     "module": "hashlib",
+     "names": [],
+     "level": 0,
+     "line": 1
+    }
+   ],
+   "symbols": [
+    {
+     "name": "fingerprint",
+     "line": 4,
+     "doc": "Stable content hash for dedupe across runs."
+    }
+   ],
+   "loc": 7
+  }
+ ],
+ "xi-one": [
+  {
+   "repo": "xi-one",
+   "path": "shared/__init__.py",
+   "lang": "python",
+   "dotted": "shared",
+   "imports": [],
+   "symbols": [],
+   "loc": 0
+  },
+  {
+   "repo": "xi-one",
+   "path": "shared/util.py",
+   "lang": "python",
+   "dotted": "shared.util",
+   "imports": [],
+   "symbols": [
+    {
+     "name": "OneUtil",
+     "line": 1,
+     "doc": ""
+    }
+   ],
+   "loc": 2
+  }
+ ],
+ "zeta-one": [
+  {
+   "repo": "zeta-one",
+   "path": "src/zeta_one/__init__.py",
+   "lang": "python",
+   "dotted": "src.zeta_one",
+   "imports": [],
+   "symbols": [],
+   "loc": 0
+  },
+  {
+   "repo": "zeta-one",
+   "path": "src/zeta_one/a.py",
+   "lang": "python",
+   "dotted": "src.zeta_one.a",
+   "imports": [
+    {
+     "module": "zeta_two.b",
+     "names": [
+      "B2"
+     ],
+     "level": 0,
+     "line": 1
+    }
+   ],
+   "symbols": [
+    {
+     "name": "A1",
+     "line": 4,
+     "doc": ""
+    }
+   ],
+   "loc": 5
+  }
+ ],
+ "zeta-three": [
+  {
+   "repo": "zeta-three",
+   "path": "src/zeta_three/__init__.py",
+   "lang": "python",
+   "dotted": "src.zeta_three",
+   "imports": [],
+   "symbols": [],
+   "loc": 0
+  },
+  {
+   "repo": "zeta-three",
+   "path": "src/zeta_three/c.py",
+   "lang": "python",
+   "dotted": "src.zeta_three.c",
+   "imports": [
+    {
+     "module": "zeta_one.a",
+     "names": [
+      "A1"
+     ],
+     "level": 0,
+     "line": 1
+    }
+   ],
+   "symbols": [
+    {
+     "name": "C3",
+     "line": 4,
+     "doc": ""
+    }
+   ],
+   "loc": 5
+  }
+ ],
+ "zeta-two": [
+  {
+   "repo": "zeta-two",
+   "path": "src/zeta_two/__init__.py",
+   "lang": "python",
+   "dotted": "src.zeta_two",
+   "imports": [],
+   "symbols": [],
+   "loc": 0
+  },
+  {
+   "repo": "zeta-two",
+   "path": "src/zeta_two/b.py",
+   "lang": "python",
+   "dotted": "src.zeta_two.b",
+   "imports": [
+    {
+     "module": "zeta_three.c",
+     "names": [
+      "C3"
+     ],
+     "level": 0,
+     "line": 1
+    }
+   ],
+   "symbols": [
+    {
+     "name": "B2",
+     "line": 4,
+     "doc": ""
+    }
+   ],
+   "loc": 5
+  }
+ ]
+}

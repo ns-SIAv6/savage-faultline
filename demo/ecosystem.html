@@ -1,0 +1,7391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Savage Faultline</title>
+<style>
+  :root{
+    --bg:#0a0a0a; --panel:#111111; --line:#2a2a2a; --text:#d4d4d0; --dim:#888888;
+    --cert:#4caf7d; --certdim:#14211a;
+    --gold:#c9a84c; --gold-light:#e8c97a;
+    --clandestine:#c9a84c; --library:#e8c97a; --isolated:#333333;
+    --high:#e05555; --medium:#c9a84c; --low:#888888; --blast:#d48ab8; --invis:#e05555;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--text);
+    font:13px/1.5 ui-monospace,"SF Mono",Menlo,monospace;overflow:hidden}
+  #app{display:grid;grid-template-columns:1fr 430px;grid-template-rows:auto 1fr;height:100%}
+  header{grid-column:1/3;display:flex;align-items:baseline;gap:20px;padding:12px 20px;
+    border-bottom:1px solid var(--line);background:var(--panel);flex-wrap:wrap}
+  header h1{font-family:Georgia,'Times New Roman',serif;font-size:15px;margin:0;letter-spacing:.3em;font-weight:700;color:#f5f5f0}
+  .metric{color:var(--dim);font-size:11px;letter-spacing:.06em}
+  .metric b{color:#fff;font-weight:600}
+  .metric.warn b{color:var(--clandestine)}
+  #stage{position:relative;overflow:hidden}
+  svg{width:100%;height:100%;display:block}
+  .node{cursor:pointer}
+  .node text{pointer-events:none;user-select:none}
+  #side{border-left:1px solid var(--line);background:var(--panel);overflow-y:auto;padding:15px}
+  #side h2{font-size:10.5px;letter-spacing:.18em;color:var(--dim);margin:0 0 9px;font-weight:600}
+  .kv{display:flex;justify-content:space-between;gap:10px;padding:2px 0;font-size:11.5px}
+  .kv .k{color:var(--dim)}
+  .kv .v{text-align:right;color:#dbe5ef}
+  .card{border:1px solid var(--line);border-radius:6px;padding:11px;margin-bottom:12px;background:#0d1319}
+  .card.cert{border-color:var(--cert);background:var(--certdim)}
+  header{border-bottom-color:var(--gold)}
+  .card.blast{border-color:var(--blast);background:#1a0f18}
+  .tag{display:inline-block;padding:1px 6px;border-radius:3px;font-size:10px;
+    border:1px solid var(--line);color:#93a5b8;margin:2px 3px 2px 0}
+  .w{font-size:10.5px;color:var(--dim);margin-top:3px;word-break:break-all}
+  .w b{color:#8fa2b5;font-weight:500}
+  .hint{position:absolute;left:18px;bottom:14px;color:var(--dim);font-size:11px}
+  .lead{color:#8fa2b5;font-size:11.5px;margin:0 0 10px}
+  ::-webkit-scrollbar{width:9px}::-webkit-scrollbar-thumb{background:#1e2a37;border-radius:5px}
+  /* living-instrument motion: dash flow on coupling arcs, slow dial rotation */
+  @keyframes dashflow{to{stroke-dashoffset:-32}}
+  .flow{animation:dashflow 1.8s linear infinite}
+  .flowfast{animation:dashflow 1.1s linear infinite}
+  @keyframes nodepulse{0%,100%{opacity:.55}50%{opacity:1}}
+  .hotnode{animation:nodepulse 2.2s ease-in-out infinite}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>SAVAGE <span style="color:var(--gold)">FAULTLINE</span></h1>
+    <span class="metric">repos <b id="mRepos">–</b></span>
+    <span class="metric">seams <b id="mSeams">–</b></span>
+    <span class="metric">symbols crossing <b id="mSym">–</b></span>
+    <span class="metric warn">certified independent <b id="mCert">–</b></span>
+    <span class="metric warn">sharing config <b id="mInvis">–</b></span>
+    <span class="metric">forks <b id="mForks">–</b></span>
+    <span class="metric warn">critical risks <b id="mCrit">–</b></span>
+    <span class="metric">files parsed <b id="mFiles">–</b></span>
+  </header>
+  <div id="stage">
+    <svg id="svg"></svg>
+    <div class="hint" id="hint">gold solid = code seam &nbsp;·&nbsp; gold dashed = byte-identical content &nbsp;·&nbsp; red dashed = shared database, credential or bucket &nbsp;·&nbsp; click any repo</div>
+  </div>
+  <div id="side">
+    <div id="detail"></div>
+  </div>
+</div>
+<script>
+const NS="http://www.w3.org/2000/svg";
+const GOLD="#c9a84c", GOLDL="#e8c97a", GREEN="#54f28a", RED="#e05555", PINK="#d48ab8";
+const REGIME={clandestine:GOLD,library:GOLDL,isolated:"#333333",
+              balanced:GREEN,interdependent:"#b79cf9",phantom:RED};
+const SEV={critical:RED,high:RED,medium:GOLD,low:"#888"};
+let D=null, W=900, H=680, sel=null;
+
+// ---- deterministic geometry. No randomness, no simulation. -------------
+const CORE_R=78, MID_R=196, RING_R=308, CX=0, CY=0;
+
+D={
+ "ambiguous_names": {
+  "@example/quantum-toxicity-mcp": [
+   "repo-01",
+   "repo-05"
+  ],
+  "agent": [
+   "repo-06",
+   "repo-07"
+  ],
+  "agent.path-a": [
+   "repo-06",
+   "repo-07"
+  ],
+  "agent.path-a.tests": [
+   "repo-06",
+   "repo-07"
+  ],
+  "agent.path-b": [
+   "repo-06",
+   "repo-07"
+  ],
+  "agent.path-b.tests": [
+   "repo-06",
+   "repo-07"
+  ],
+  "agent.path-c": [
+   "repo-06",
+   "repo-07"
+  ],
+  "agent.path-c.tests": [
+   "repo-06",
+   "repo-07"
+  ],
+  "agent.shared": [
+   "repo-06",
+   "repo-07"
+  ],
+  "agent.sovereign": [
+   "repo-06",
+   "repo-07"
+  ],
+  "agent.sovereign.tests": [
+   "repo-06",
+   "repo-07"
+  ],
+  "agent.tests": [
+   "repo-06",
+   "repo-07"
+  ],
+  "agents": [
+   "repo-05",
+   "repo-06",
+   "repo-07"
+  ],
+  "amazon-product-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "amazon-product-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "amazon-review-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "amazon-review-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "api": [
+   "repo-03",
+   "repo-05",
+   "repo-12",
+   "repo-16"
+  ],
+  "app-store-review-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "app-store-review-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "app-store-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "app-store-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "architecture": [
+   "repo-12",
+   "repo-13"
+  ],
+  "artifacts": [
+   "repo-06",
+   "repo-16"
+  ],
+  "bbb-business-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "bbb-business-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "benchmark": [
+   "repo-06",
+   "repo-12"
+  ],
+  "broken-link-checker": [
+   "repo-18",
+   "repo-19"
+  ],
+  "broken-link-checker.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "ceros": [
+   "repo-04",
+   "repo-05"
+  ],
+  "cloud-run-jobs": [
+   "repo-06",
+   "repo-07"
+  ],
+  "company-domain-enricher": [
+   "repo-18",
+   "repo-19"
+  ],
+  "company-domain-enricher.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "components": [
+   "repo-02",
+   "repo-03",
+   "repo-05",
+   "repo-06",
+   "repo-10",
+   "repo-18"
+  ],
+  "components.ui": [
+   "repo-06",
+   "repo-10",
+   "repo-18"
+  ],
+  "constitutional": [
+   "repo-05",
+   "repo-06"
+  ],
+  "core": [
+   "repo-10",
+   "repo-13",
+   "repo-18"
+  ],
+  "craigslist-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "craigslist-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "crypto-price-tracker": [
+   "repo-18",
+   "repo-19"
+  ],
+  "crypto-price-tracker.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "cwdsl": [
+   "repo-04",
+   "repo-05"
+  ],
+  "dat1": [
+   "repo-06",
+   "repo-07"
+  ],
+  "dat1.agent": [
+   "repo-06",
+   "repo-07"
+  ],
+  "dat1.agent.sovereign": [
+   "repo-06",
+   "repo-07"
+  ],
+  "data": [
+   "repo-03",
+   "repo-06"
+  ],
+  "db": [
+   "repo-03",
+   "repo-06"
+  ],
+  "diamond": [
+   "repo-05",
+   "repo-06"
+  ],
+  "discovery": [
+   "repo-04",
+   "repo-05"
+  ],
+  "disposable-email-detector": [
+   "repo-18",
+   "repo-19"
+  ],
+  "disposable-email-detector.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "dns-records-api": [
+   "repo-18",
+   "repo-19"
+  ],
+  "dns-records-api.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "domain-availability-checker": [
+   "repo-18",
+   "repo-19"
+  ],
+  "domain-availability-checker.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "domain-expiry-monitor": [
+   "repo-18",
+   "repo-19"
+  ],
+  "domain-expiry-monitor.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "ebay-listing-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "ebay-listing-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "email-validator": [
+   "repo-18",
+   "repo-19"
+  ],
+  "email-validator.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "engines": [
+   "repo-06",
+   "repo-07",
+   "repo-12"
+  ],
+  "etsy-product-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "etsy-product-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "fda-recall-lookup": [
+   "repo-18",
+   "repo-19"
+  ],
+  "fda-recall-lookup.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "fixtures": [
+   "repo-12",
+   "repo-18"
+  ],
+  "functions": [
+   "repo-10",
+   "repo-12"
+  ],
+  "github-trending-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "github-trending-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "glassdoor-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "glassdoor-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "google-maps-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "google-maps-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "google-news-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "google-news-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "google-suggest-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "google-suggest-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "governance": [
+   "repo-01",
+   "repo-02",
+   "repo-04",
+   "repo-05"
+  ],
+  "hacker-news-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "hacker-news-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "hooks": [
+   "repo-02",
+   "repo-06",
+   "repo-10",
+   "repo-18"
+  ],
+  "html-to-markdown": [
+   "repo-18",
+   "repo-19"
+  ],
+  "html-to-markdown.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "http-header-analyzer": [
+   "repo-18",
+   "repo-19"
+  ],
+  "http-header-analyzer.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "indeed-job-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "indeed-job-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "instagram-profile-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "instagram-profile-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "integrations": [
+   "repo-06",
+   "repo-12",
+   "repo-16",
+   "repo-18"
+  ],
+  "intelligence": [
+   "repo-01",
+   "repo-12"
+  ],
+  "ip-geolocation": [
+   "repo-18",
+   "repo-19"
+  ],
+  "ip-geolocation.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "job-board-aggregator": [
+   "repo-18",
+   "repo-19"
+  ],
+  "job-board-aggregator.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "kernel": [
+   "repo-04",
+   "repo-05"
+  ],
+  "lib": [
+   "repo-01",
+   "repo-06",
+   "repo-10",
+   "repo-18"
+  ],
+  "linkedin-company-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "linkedin-company-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "local": [
+   "repo-03",
+   "repo-12"
+  ],
+  "mcp": [
+   "repo-06",
+   "repo-12"
+  ],
+  "meta-tag-extractor": [
+   "repo-18",
+   "repo-19"
+  ],
+  "meta-tag-extractor.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "middleware": [
+   "repo-03",
+   "repo-06",
+   "repo-10"
+  ],
+  "mortgage-calculator": [
+   "repo-18",
+   "repo-19"
+  ],
+  "mortgage-calculator.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "multi-site-uptime-monitor": [
+   "repo-18",
+   "repo-19"
+  ],
+  "multi-site-uptime-monitor.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "multi-source-weather-api": [
+   "repo-18",
+   "repo-19"
+  ],
+  "multi-source-weather-api.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "news-aggregator-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "news-aggregator-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "og-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "og-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "page-speed-analyzer": [
+   "repo-18",
+   "repo-19"
+  ],
+  "page-speed-analyzer.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "pages": [
+   "repo-06",
+   "repo-10",
+   "repo-18"
+  ],
+  "path-a": [
+   "repo-06",
+   "repo-07"
+  ],
+  "path-a.tests": [
+   "repo-06",
+   "repo-07"
+  ],
+  "path-b": [
+   "repo-06",
+   "repo-07"
+  ],
+  "path-b.tests": [
+   "repo-06",
+   "repo-07"
+  ],
+  "path-c": [
+   "repo-06",
+   "repo-07"
+  ],
+  "path-c.tests": [
+   "repo-06",
+   "repo-07"
+  ],
+  "pdf-generator": [
+   "repo-18",
+   "repo-19"
+  ],
+  "pdf-generator.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "phone-validator": [
+   "repo-18",
+   "repo-19"
+  ],
+  "phone-validator.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "pinterest-pin-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "pinterest-pin-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "price-comparison-aggregator": [
+   "repo-18",
+   "repo-19"
+  ],
+  "price-comparison-aggregator.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "product-hunt-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "product-hunt-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "qr-code-generator": [
+   "repo-18",
+   "repo-19"
+  ],
+  "qr-code-generator.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "quantum-toxicity-mcp": [
+   "repo-01",
+   "repo-05"
+  ],
+  "recipe-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "recipe-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "reddit-comment-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "reddit-comment-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "reddit-post-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "reddit-post-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "robots-txt-analyzer": [
+   "repo-18",
+   "repo-19"
+  ],
+  "robots-txt-analyzer.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "routes": [
+   "repo-03",
+   "repo-06",
+   "repo-10"
+  ],
+  "rss-to-json": [
+   "repo-18",
+   "repo-19"
+  ],
+  "rss-to-json.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "screenshot-api": [
+   "repo-18",
+   "repo-19"
+  ],
+  "screenshot-api.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "security": [
+   "repo-12",
+   "repo-16"
+  ],
+  "server": [
+   "repo-01",
+   "repo-03",
+   "repo-10"
+  ],
+  "shared": [
+   "repo-06",
+   "repo-07",
+   "repo-10"
+  ],
+  "shopify-product-detector": [
+   "repo-18",
+   "repo-19"
+  ],
+  "shopify-store-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "shopify-store-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "shopify-theme-detector": [
+   "repo-18",
+   "repo-19"
+  ],
+  "shopify-theme-detector.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "sia-v6": [
+   "repo-06",
+   "repo-20"
+  ],
+  "sitemap-extractor": [
+   "repo-18",
+   "repo-19"
+  ],
+  "sitemap-extractor.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "skills": [
+   "repo-06",
+   "repo-12"
+  ],
+  "sovereign": [
+   "repo-06",
+   "repo-07"
+  ],
+  "sovereign-lab": [
+   "repo-06",
+   "repo-07"
+  ],
+  "sovereign.tests": [
+   "repo-06",
+   "repo-07"
+  ],
+  "ssl-certificate-checker": [
+   "repo-18",
+   "repo-19"
+  ],
+  "ssl-certificate-checker.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "startup-funding-tracker": [
+   "repo-18",
+   "repo-19"
+  ],
+  "startup-funding-tracker.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "stock-data-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "stock-data-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "telemetry": [
+   "repo-03",
+   "repo-12"
+  ],
+  "text-sentiment-analyzer": [
+   "repo-18",
+   "repo-19"
+  ],
+  "text-sentiment-analyzer.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.amazon-product-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.amazon-product-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.amazon-review-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.amazon-review-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.bbb-business-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.bbb-business-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.broken-link-checker": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.broken-link-checker.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.company-domain-enricher": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.company-domain-enricher.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.craigslist-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.craigslist-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.disposable-email-detector": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.disposable-email-detector.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.dns-records-api": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.dns-records-api.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.ebay-listing-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.ebay-listing-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.email-validator": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.email-validator.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.etsy-product-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.etsy-product-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.github-trending-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.github-trending-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.glassdoor-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.glassdoor-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.google-maps-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.google-maps-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.google-news-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.google-news-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.google-suggest-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.google-suggest-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.hacker-news-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.hacker-news-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.html-to-markdown": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.html-to-markdown.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.http-header-analyzer": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.http-header-analyzer.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.indeed-job-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.indeed-job-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.ip-geolocation": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.ip-geolocation.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.meta-tag-extractor": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.meta-tag-extractor.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.og-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.og-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.page-speed-analyzer": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.page-speed-analyzer.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.pdf-generator": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.pdf-generator.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.phone-validator": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.phone-validator.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.pinterest-pin-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.pinterest-pin-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.price-comparison-aggregator": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.price-comparison-aggregator.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.product-hunt-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.product-hunt-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.qr-code-generator": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.qr-code-generator.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.reddit-comment-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.reddit-comment-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.reddit-post-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.reddit-post-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.robots-txt-analyzer": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.robots-txt-analyzer.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.rss-to-json": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.rss-to-json.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.screenshot-api": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.screenshot-api.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.shopify-store-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.shopify-store-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.shopify-theme-detector": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.shopify-theme-detector.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.sitemap-extractor": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.sitemap-extractor.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.ssl-certificate-checker": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.ssl-certificate-checker.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.text-sentiment-analyzer": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.text-sentiment-analyzer.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.trustpilot-review-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.trustpilot-review-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.url-unshortener": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.url-unshortener.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.user-agent-parser": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.user-agent-parser.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.walmart-product-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.walmart-product-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.website-tech-detector": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.website-tech-detector.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.whois-lookup": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.whois-lookup.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.yellow-pages-extractor": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.yellow-pages-extractor.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.yelp-lead-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.yelp-lead-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.youtube-channel-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.youtube-channel-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.youtube-comment-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier1.youtube-comment-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier2": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier2.app-store-review-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier2.app-store-review-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier2.app-store-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier2.app-store-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier2.crypto-price-tracker": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier2.crypto-price-tracker.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier2.domain-availability-checker": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier2.domain-availability-checker.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier2.domain-expiry-monitor": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier2.domain-expiry-monitor.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier2.fda-recall-lookup": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier2.fda-recall-lookup.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier2.instagram-profile-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier2.instagram-profile-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier2.job-board-aggregator": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier2.job-board-aggregator.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier2.linkedin-company-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier2.linkedin-company-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier2.mortgage-calculator": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier2.mortgage-calculator.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier2.multi-site-uptime-monitor": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier2.multi-site-uptime-monitor.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier2.multi-source-weather-api": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier2.multi-source-weather-api.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier2.news-aggregator-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier2.news-aggregator-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier2.recipe-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier2.recipe-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier2.startup-funding-tracker": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier2.startup-funding-tracker.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier2.stock-data-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier2.stock-data-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier2.tiktok-profile-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier2.tiktok-profile-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier2.twitter-profile-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier2.twitter-profile-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier2.zillow-listing-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tier2.zillow-listing-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tiktok-profile-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tiktok-profile-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "tollbooth": [
+   "repo-06",
+   "repo-07"
+  ],
+  "tools": [
+   "repo-06",
+   "repo-16",
+   "repo-18",
+   "repo-19"
+  ],
+  "tools.video-studio": [
+   "repo-18",
+   "repo-19"
+  ],
+  "triadic": [
+   "repo-04",
+   "repo-05",
+   "repo-09"
+  ],
+  "trustpilot-review-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "trustpilot-review-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "twitter-profile-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "twitter-profile-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "ui": [
+   "repo-03",
+   "repo-06",
+   "repo-10",
+   "repo-18"
+  ],
+  "url-unshortener": [
+   "repo-18",
+   "repo-19"
+  ],
+  "url-unshortener.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "user-agent-parser": [
+   "repo-18",
+   "repo-19"
+  ],
+  "user-agent-parser.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "video-studio": [
+   "repo-18",
+   "repo-19"
+  ],
+  "walmart-product-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "walmart-product-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "website-tech-detector": [
+   "repo-18",
+   "repo-19"
+  ],
+  "website-tech-detector.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "whois-lookup": [
+   "repo-18",
+   "repo-19"
+  ],
+  "whois-lookup.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "workspace": [
+   "repo-06",
+   "repo-12"
+  ],
+  "yellow-pages-extractor": [
+   "repo-18",
+   "repo-19"
+  ],
+  "yellow-pages-extractor.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "yelp-lead-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "yelp-lead-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "youtube-channel-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "youtube-channel-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "youtube-comment-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "youtube-comment-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ],
+  "zillow-listing-scraper": [
+   "repo-18",
+   "repo-19"
+  ],
+  "zillow-listing-scraper.src": [
+   "repo-18",
+   "repo-19"
+  ]
+ },
+ "blast_radius": {
+  "repo-01": {
+   "count": 2,
+   "direct": [
+    "repo-05"
+   ],
+   "transitive": [
+    "repo-05",
+    "repo-06"
+   ]
+  },
+  "repo-02": {
+   "count": 0,
+   "direct": [],
+   "transitive": []
+  },
+  "repo-03": {
+   "count": 0,
+   "direct": [],
+   "transitive": []
+  },
+  "repo-04": {
+   "count": 3,
+   "direct": [
+    "repo-05",
+    "repo-11"
+   ],
+   "transitive": [
+    "repo-05",
+    "repo-06",
+    "repo-11"
+   ]
+  },
+  "repo-05": {
+   "count": 1,
+   "direct": [
+    "repo-06"
+   ],
+   "transitive": [
+    "repo-06"
+   ]
+  },
+  "repo-06": {
+   "count": 0,
+   "direct": [],
+   "transitive": []
+  },
+  "repo-07": {
+   "count": 0,
+   "direct": [],
+   "transitive": []
+  },
+  "repo-08": {
+   "count": 0,
+   "direct": [],
+   "transitive": []
+  },
+  "repo-09": {
+   "count": 0,
+   "direct": [],
+   "transitive": []
+  },
+  "repo-10": {
+   "count": 0,
+   "direct": [],
+   "transitive": []
+  },
+  "repo-11": {
+   "count": 0,
+   "direct": [],
+   "transitive": []
+  },
+  "repo-12": {
+   "count": 0,
+   "direct": [],
+   "transitive": []
+  },
+  "repo-13": {
+   "count": 1,
+   "direct": [
+    "repo-11"
+   ],
+   "transitive": [
+    "repo-11"
+   ]
+  },
+  "repo-14": {
+   "count": 0,
+   "direct": [],
+   "transitive": []
+  },
+  "repo-15": {
+   "count": 0,
+   "direct": [],
+   "transitive": []
+  },
+  "repo-16": {
+   "count": 0,
+   "direct": [],
+   "transitive": []
+  },
+  "repo-17": {
+   "count": 0,
+   "direct": [],
+   "transitive": []
+  },
+  "repo-18": {
+   "count": 0,
+   "direct": [],
+   "transitive": []
+  },
+  "repo-19": {
+   "count": 1,
+   "direct": [
+    "repo-16"
+   ],
+   "transitive": [
+    "repo-16"
+   ]
+  },
+  "repo-20": {
+   "count": 1,
+   "direct": [
+    "repo-11"
+   ],
+   "transitive": [
+    "repo-11"
+   ]
+  }
+ },
+ "certificate_denied": [
+  {
+   "partners": [
+    "repo-05",
+    "repo-07",
+    "repo-11",
+    "repo-13"
+   ],
+   "reason": "no code coupling, but shares operational identifiers with other repos",
+   "repo": "repo-02"
+  },
+  {
+   "partners": [
+    "repo-12"
+   ],
+   "reason": "no code coupling, but shares operational identifiers with other repos",
+   "repo": "repo-03"
+  },
+  {
+   "partners": [
+    "repo-02",
+    "repo-06",
+    "repo-10",
+    "repo-11",
+    "repo-13",
+    "repo-16",
+    "repo-18"
+   ],
+   "reason": "no code coupling, but shares operational identifiers with other repos",
+   "repo": "repo-07"
+  },
+  {
+   "partners": [
+    "repo-01",
+    "repo-06",
+    "repo-11",
+    "repo-16",
+    "repo-18"
+   ],
+   "reason": "no code coupling, but shares operational identifiers with other repos",
+   "repo": "repo-09"
+  },
+  {
+   "partners": [
+    "repo-06",
+    "repo-07",
+    "repo-16"
+   ],
+   "reason": "no code coupling, but shares operational identifiers with other repos",
+   "repo": "repo-10"
+  },
+  {
+   "partners": [
+    "repo-03"
+   ],
+   "reason": "no code coupling, but shares operational identifiers with other repos",
+   "repo": "repo-12"
+  },
+  {
+   "partners": [
+    "repo-01",
+    "repo-06",
+    "repo-07",
+    "repo-09",
+    "repo-11",
+    "repo-16",
+    "repo-19"
+   ],
+   "reason": "no code coupling, but shares operational identifiers with other repos",
+   "repo": "repo-18"
+  }
+ ],
+ "certificates": [
+  {
+   "content_check_ran": true,
+   "cross_repo_in": 0,
+   "cross_repo_out": 0,
+   "declared_dependencies": [],
+   "external_packages": 1,
+   "files_parsed": 6,
+   "imports_examined": 19,
+   "operational_check_ran": true,
+   "repo": "repo-08",
+   "scope": "three independent checks, all of which must have run: (1) no code-level import crosses in either direction; (2) no environment variable, database table, or bucket name is shared with any other repository; (3) no byte-identical files shared with any other repository (fork/vendor detection).",
+   "shared_operational_identifiers": 0
+  },
+  {
+   "content_check_ran": true,
+   "cross_repo_in": 0,
+   "cross_repo_out": 0,
+   "declared_dependencies": [
+    "@example/react",
+    "@example/react-dom",
+    "@example/eslint-plugin",
+    "@example/parser",
+    "@example/plugin-react",
+    "eslint",
+    "eslint-plugin-react-hooks",
+    "eslint-plugin-react-refresh",
+    "react",
+    "react-dom",
+    "typescript",
+    "vite"
+   ],
+   "external_packages": 4,
+   "files_parsed": 10,
+   "imports_examined": 18,
+   "operational_check_ran": true,
+   "repo": "repo-14",
+   "scope": "three independent checks, all of which must have run: (1) no code-level import crosses in either direction; (2) no environment variable, database table, or bucket name is shared with any other repository; (3) no byte-identical files shared with any other repository (fork/vendor detection).",
+   "shared_operational_identifiers": 0
+  },
+  {
+   "content_check_ran": true,
+   "cross_repo_in": 0,
+   "cross_repo_out": 0,
+   "declared_dependencies": [
+    "@example/node",
+    "tsx",
+    "typescript"
+   ],
+   "external_packages": 1,
+   "files_parsed": 17,
+   "imports_examined": 50,
+   "operational_check_ran": true,
+   "repo": "repo-15",
+   "scope": "three independent checks, all of which must have run: (1) no code-level import crosses in either direction; (2) no environment variable, database table, or bucket name is shared with any other repository; (3) no byte-identical files shared with any other repository (fork/vendor detection).",
+   "shared_operational_identifiers": 0
+  },
+  {
+   "content_check_ran": true,
+   "cross_repo_in": 0,
+   "cross_repo_out": 0,
+   "declared_dependencies": [],
+   "external_packages": 1,
+   "files_parsed": 18,
+   "imports_examined": 40,
+   "operational_check_ran": true,
+   "repo": "repo-17",
+   "scope": "three independent checks, all of which must have run: (1) no code-level import crosses in either direction; (2) no environment variable, database table, or bucket name is shared with any other repository; (3) no byte-identical files shared with any other repository (fork/vendor detection).",
+   "shared_operational_identifiers": 0
+  }
+ ],
+ "emergent": [
+  {
+   "because": "no repo can count the strata below it; depth is a whole-graph measurement",
+   "claim": "the ecosystem is layered 3 strata deep \u2014 changes at the foundation propagate 2 hops",
+   "evidence": {
+    "depth": 3
+   },
+   "kind": "topology"
+  },
+  {
+   "because": "each repo sees only its own read of the credential; the fan-out shape exists nowhere but across the set",
+   "claim": "`SHARED_ENV_13` fans out to 6 repositories \u2014 one rotation event reaches all of them at once",
+   "evidence": {
+    "identifier": "SHARED_ENV_13",
+    "repos": [
+     "repo-01",
+     "repo-06",
+     "repo-09",
+     "repo-11",
+     "repo-16",
+     "repo-18"
+    ]
+   },
+   "kind": "fanout"
+  },
+  {
+   "because": "each repo sees only its own read of the credential; the fan-out shape exists nowhere but across the set",
+   "claim": "`SHARED_ENV_16` fans out to 4 repositories \u2014 one rotation event reaches all of them at once",
+   "evidence": {
+    "identifier": "SHARED_ENV_16",
+    "repos": [
+     "repo-02",
+     "repo-07",
+     "repo-11",
+     "repo-13"
+    ]
+   },
+   "kind": "fanout"
+  },
+  {
+   "because": "each repo sees only its own read of the credential; the fan-out shape exists nowhere but across the set",
+   "claim": "`SHARED_ENV_15` fans out to 2 repositories \u2014 one rotation event reaches all of them at once",
+   "evidence": {
+    "identifier": "SHARED_ENV_15",
+    "repos": [
+     "repo-05",
+     "repo-06"
+    ]
+   },
+   "kind": "fanout"
+  },
+  {
+   "because": "each repo sees only its own read of the credential; the fan-out shape exists nowhere but across the set",
+   "claim": "`SHARED_ENV_20` fans out to 2 repositories \u2014 one rotation event reaches all of them at once",
+   "evidence": {
+    "identifier": "SHARED_ENV_20",
+    "repos": [
+     "repo-05",
+     "repo-06"
+    ]
+   },
+   "kind": "fanout"
+  },
+  {
+   "because": "each repo sees only its own read of the credential; the fan-out shape exists nowhere but across the set",
+   "claim": "`SHARED_ENV_06` fans out to 2 repositories \u2014 one rotation event reaches all of them at once",
+   "evidence": {
+    "identifier": "SHARED_ENV_06",
+    "repos": [
+     "repo-06",
+     "repo-07"
+    ]
+   },
+   "kind": "fanout"
+  },
+  {
+   "because": "each repo sees only its own read of the credential; the fan-out shape exists nowhere but across the set",
+   "claim": "`SHARED_ENV_01` fans out to 3 repositories \u2014 one rotation event reaches all of them at once",
+   "evidence": {
+    "identifier": "SHARED_ENV_01",
+    "repos": [
+     "repo-06",
+     "repo-07",
+     "repo-16"
+    ]
+   },
+   "kind": "fanout"
+  },
+  {
+   "because": "each repo sees only its own read of the credential; the fan-out shape exists nowhere but across the set",
+   "claim": "`SHARED_ENV_19` fans out to 2 repositories \u2014 one rotation event reaches all of them at once",
+   "evidence": {
+    "identifier": "SHARED_ENV_19",
+    "repos": [
+     "repo-06",
+     "repo-16"
+    ]
+   },
+   "kind": "fanout"
+  },
+  {
+   "because": "each repo sees only its own read of the credential; the fan-out shape exists nowhere but across the set",
+   "claim": "`SHARED_ENV_14` fans out to 3 repositories \u2014 one rotation event reaches all of them at once",
+   "evidence": {
+    "identifier": "SHARED_ENV_14",
+    "repos": [
+     "repo-16",
+     "repo-18",
+     "repo-19"
+    ]
+   },
+   "kind": "fanout"
+  },
+  {
+   "because": "each repo sees only its own read of the credential; the fan-out shape exists nowhere but across the set",
+   "claim": "`SHARED_ENV_17` fans out to 2 repositories \u2014 one rotation event reaches all of them at once",
+   "evidence": {
+    "identifier": "SHARED_ENV_17",
+    "repos": [
+     "repo-18",
+     "repo-19"
+    ]
+   },
+   "kind": "fanout"
+  },
+  {
+   "because": "each repo's manifest is visible from inside; the overlap of two manifests is not",
+   "claim": "`repo-06` and `repo-10` independently built on the same rare stack (drizzle-kit, drizzle-orm, pg) yet share nothing \u2014 hypothesis, not finding",
+   "evidence": {
+    "score": 89.1125,
+    "shared_rare": [
+     "drizzle-kit",
+     "drizzle-orm",
+     "pg",
+     "recharts",
+     "zod",
+     "@example/react-accordion",
+     "@example/react-alert-dialog",
+     "@example/react-aspect-ratio",
+     "@example/react-avatar",
+     "@example/react-checkbox",
+     "@example/react-collapsible",
+     "@example/react-context-menu"
+    ]
+   },
+   "kind": "convergence"
+  },
+  {
+   "because": "each repo's manifest is visible from inside; the overlap of two manifests is not",
+   "claim": "`repo-06` and `repo-18` independently built on the same rare stack (next-themes, pdf-lib, sonner) yet share nothing \u2014 hypothesis, not finding",
+   "evidence": {
+    "score": 85.9706,
+    "shared_rare": [
+     "next-themes",
+     "pdf-lib",
+     "sonner",
+     "@example/react-accordion",
+     "@example/react-alert-dialog",
+     "@example/react-aspect-ratio",
+     "@example/react-avatar",
+     "@example/react-checkbox",
+     "@example/react-collapsible",
+     "@example/react-context-menu",
+     "@example/react-dialog",
+     "@example/react-dropdown-menu"
+    ]
+   },
+   "kind": "convergence"
+  },
+  {
+   "because": "each repo's manifest is visible from inside; the overlap of two manifests is not",
+   "claim": "`repo-10` and `repo-18` independently built on the same rare stack (tailwindcss, tailwindcss-animate, @example/react-accordion) yet share nothing \u2014 hypothesis, not finding",
+   "evidence": {
+    "score": 79.5091,
+    "shared_rare": [
+     "tailwindcss",
+     "tailwindcss-animate",
+     "@example/react-accordion",
+     "@example/react-alert-dialog",
+     "@example/react-aspect-ratio",
+     "@example/react-avatar",
+     "@example/react-checkbox",
+     "@example/react-collapsible",
+     "@example/react-context-menu",
+     "@example/react-dialog",
+     "@example/react-dropdown-menu",
+     "@example/react-hover-card"
+    ]
+   },
+   "kind": "convergence"
+  },
+  {
+   "because": "each repo's manifest is visible from inside; the overlap of two manifests is not",
+   "claim": "`repo-06` and `repo-07` independently built on the same rare stack (fastmcp, google, jwt) yet share nothing \u2014 hypothesis, not finding",
+   "evidence": {
+    "score": 26.0861,
+    "shared_rare": [
+     "fastmcp",
+     "google",
+     "jwt",
+     "pg8000",
+     "psycopg2",
+     "reportlab",
+     "scipy",
+     "vertexai",
+     "numpy",
+     "requests",
+     "fastapi",
+     "pydantic"
+    ]
+   },
+   "kind": "convergence"
+  },
+  {
+   "because": "each repo's manifest is visible from inside; the overlap of two manifests is not",
+   "claim": "`repo-01` and `repo-02` independently built on the same rare stack (@example/genai, @example/vite, vitest) yet share nothing \u2014 hypothesis, not finding",
+   "evidence": {
+    "score": 9.1334,
+    "shared_rare": [
+     "@example/genai",
+     "@example/vite",
+     "vitest",
+     "@example/plugin-react",
+     "lucide-react",
+     "vite"
+    ]
+   },
+   "kind": "convergence"
+  },
+  {
+   "because": "each repo's manifest is visible from inside; the overlap of two manifests is not",
+   "claim": "`repo-02` and `repo-05` independently built on the same rare stack (motion, @example/vite, vitest) yet share nothing \u2014 hypothesis, not finding",
+   "evidence": {
+    "score": 9.1334,
+    "shared_rare": [
+     "motion",
+     "@example/vite",
+     "vitest",
+     "@example/plugin-react",
+     "lucide-react",
+     "vite"
+    ]
+   },
+   "kind": "convergence"
+  },
+  {
+   "because": "each repo's manifest is visible from inside; the overlap of two manifests is not",
+   "claim": "`repo-18` and `repo-19` independently built on the same rare stack (pdfkit, playwright, qrcode) yet share nothing \u2014 hypothesis, not finding",
+   "evidence": {
+    "score": 8.294,
+    "shared_rare": [
+     "pdfkit",
+     "playwright",
+     "qrcode",
+     "node:child-process"
+    ]
+   },
+   "kind": "convergence"
+  },
+  {
+   "because": "each repo's manifest is visible from inside; the overlap of two manifests is not",
+   "claim": "`repo-11` and `repo-18` independently built on the same rare stack (httpx, requests, fastapi) yet share nothing \u2014 hypothesis, not finding",
+   "evidence": {
+    "score": 7.6654,
+    "shared_rare": [
+     "httpx",
+     "requests",
+     "fastapi",
+     "pydantic",
+     "pytest"
+    ]
+   },
+   "kind": "convergence"
+  },
+  {
+   "because": "each repo's manifest is visible from inside; the overlap of two manifests is not",
+   "claim": "`repo-01` and `repo-06` independently built on the same rare stack (ws, @example/vite, @example/plugin-react) yet share nothing \u2014 hypothesis, not finding",
+   "evidence": {
+    "score": 7.1185,
+    "shared_rare": [
+     "ws",
+     "@example/vite",
+     "@example/plugin-react",
+     "lucide-react",
+     "vite"
+    ]
+   },
+   "kind": "convergence"
+  },
+  {
+   "because": "each repo's manifest is visible from inside; the overlap of two manifests is not",
+   "claim": "`repo-03` and `repo-10` independently built on the same rare stack (express-rate-limit, helmet, dotenv) yet share nothing \u2014 hypothesis, not finding",
+   "evidence": {
+    "score": 5.8091,
+    "shared_rare": [
+     "express-rate-limit",
+     "helmet",
+     "dotenv"
+    ]
+   },
+   "kind": "convergence"
+  },
+  {
+   "because": "each repo's manifest is visible from inside; the overlap of two manifests is not",
+   "claim": "`repo-06` and `repo-11` independently built on the same rare stack (requests, fastapi, pydantic) yet share nothing \u2014 hypothesis, not finding",
+   "evidence": {
+    "score": 5.7683,
+    "shared_rare": [
+     "requests",
+     "fastapi",
+     "pydantic",
+     "pytest"
+    ]
+   },
+   "kind": "convergence"
+  },
+  {
+   "because": "each repo's manifest is visible from inside; the overlap of two manifests is not",
+   "claim": "`repo-07` and `repo-11` independently built on the same rare stack (requests, fastapi, pydantic) yet share nothing \u2014 hypothesis, not finding",
+   "evidence": {
+    "score": 5.7683,
+    "shared_rare": [
+     "requests",
+     "fastapi",
+     "pydantic",
+     "pytest"
+    ]
+   },
+   "kind": "convergence"
+  },
+  {
+   "because": "each repo's manifest is visible from inside; the overlap of two manifests is not",
+   "claim": "`repo-07` and `repo-18` independently built on the same rare stack (requests, fastapi, pydantic) yet share nothing \u2014 hypothesis, not finding",
+   "evidence": {
+    "score": 5.7683,
+    "shared_rare": [
+     "requests",
+     "fastapi",
+     "pydantic",
+     "pytest"
+    ]
+   },
+   "kind": "convergence"
+  },
+  {
+   "because": "each repo's manifest is visible from inside; the overlap of two manifests is not",
+   "claim": "`repo-02` and `repo-06` independently built on the same rare stack (@example/vite, @example/plugin-react, lucide-react) yet share nothing \u2014 hypothesis, not finding",
+   "evidence": {
+    "score": 5.2214,
+    "shared_rare": [
+     "@example/vite",
+     "@example/plugin-react",
+     "lucide-react",
+     "vite"
+    ]
+   },
+   "kind": "convergence"
+  },
+  {
+   "because": "each repo's manifest is visible from inside; the overlap of two manifests is not",
+   "claim": "`repo-02` and `repo-10` independently built on the same rare stack (dotenv, @example/plugin-react, lucide-react) yet share nothing \u2014 hypothesis, not finding",
+   "evidence": {
+    "score": 5.2214,
+    "shared_rare": [
+     "dotenv",
+     "@example/plugin-react",
+     "lucide-react",
+     "vite"
+    ]
+   },
+   "kind": "convergence"
+  },
+  {
+   "because": "each repo's manifest is visible from inside; the overlap of two manifests is not",
+   "claim": "`repo-03` and `repo-06` independently built on the same rare stack (cors, helmet) yet share nothing \u2014 hypothesis, not finding",
+   "evidence": {
+    "score": 4.1997,
+    "shared_rare": [
+     "cors",
+     "helmet"
+    ]
+   },
+   "kind": "convergence"
+  },
+  {
+   "because": "each repo's manifest is visible from inside; the overlap of two manifests is not",
+   "claim": "`repo-06` and `repo-20` independently built on the same rare stack (fastapi, pydantic, pytest) yet share nothing \u2014 hypothesis, not finding",
+   "evidence": {
+    "score": 4.1589,
+    "shared_rare": [
+     "fastapi",
+     "pydantic",
+     "pytest"
+    ]
+   },
+   "kind": "convergence"
+  },
+  {
+   "because": "each repo's manifest is visible from inside; the overlap of two manifests is not",
+   "claim": "`repo-07` and `repo-20` independently built on the same rare stack (fastapi, pydantic, pytest) yet share nothing \u2014 hypothesis, not finding",
+   "evidence": {
+    "score": 4.1589,
+    "shared_rare": [
+     "fastapi",
+     "pydantic",
+     "pytest"
+    ]
+   },
+   "kind": "convergence"
+  },
+  {
+   "because": "each repo's manifest is visible from inside; the overlap of two manifests is not",
+   "claim": "`repo-18` and `repo-20` independently built on the same rare stack (fastapi, pydantic, pytest) yet share nothing \u2014 hypothesis, not finding",
+   "evidence": {
+    "score": 4.1589,
+    "shared_rare": [
+     "fastapi",
+     "pydantic",
+     "pytest"
+    ]
+   },
+   "kind": "convergence"
+  },
+  {
+   "because": "each repo's manifest is visible from inside; the overlap of two manifests is not",
+   "claim": "`repo-01` and `repo-16` independently built on the same rare stack (child-process, ws) yet share nothing \u2014 hypothesis, not finding",
+   "evidence": {
+    "score": 3.7942,
+    "shared_rare": [
+     "child-process",
+     "ws"
+    ]
+   },
+   "kind": "convergence"
+  },
+  {
+   "because": "a repo cannot know which of its exports are read elsewhere; the consumers cannot know what else it offers",
+   "claim": "the ecosystem reads 1 of 55 public symbol(s) `repo-13` offers \u2014 `repo-13`'s unread surface is the rest",
+   "evidence": {
+    "offered": [
+     "AgentNode",
+     "ArbiterKernelMind",
+     "BreakthroughCandidate",
+     "ConstitutionalResult",
+     "ConstraintValidator",
+     "CycleTrace",
+     "EmbeddingProvider",
+     "EpisodicEventFrame",
+     "EvolutionaryTreeArchive",
+     "GoalDriftIndexCalculator",
+     "LLMMutationProvider",
+     "MockEmbeddingProvider",
+     "MutationResult",
+     "OpenRouterEmbeddingProvider",
+     "symbol_02",
+     "OrganizationalControlLayer",
+     "PromotionCandidate",
+     "SEEMMemory",
+     "TriadicScore",
+     "WASMExecutionSandbox",
+     "auto_score",
+     "build_baseline_text",
+     "compute_full_drift",
+     "get_diamond_tier",
+     "get_dynamic_threshold",
+     "get_embedding_provider",
+     "main",
+     "measure_fitness",
+     "mine_and_promote",
+     "run_constitutional_check",
+     "run_full_calibration",
+     "test_arbiter_full_cycle_smoke",
+     "test_arbiter_gdi_varies_across_different_modifications",
+     "test_arbiter_uses_embedding_provider_for_gdi",
+     "test_cmp_weighted_by_evaluation_count",
+     "test_constraint_validator_blocks_forbidden_imports",
+     "test_constraint_validator_passes_clean_code",
+     "test_cycle_marks_measured_provenance",
+     "test_evolutionary_tree_clade_calculations",
+     "test_evolutionary_tree_round_trip_persistence",
+     "test_get_embedding_provider_returns_mock_without_key",
+     "test_get_embedding_provider_returns_real_with_key",
+     "test_goal_drift_alignment_eval",
+     "test_harness_flags_inconsistent_output",
+     "test_harness_measures_real_fitness_not_projection",
+     "test_harness_unavailable_is_honest_projection",
+     "test_main_exports_organism_issue_summary",
+     "test_mock_embedding_provider_batch",
+     "test_mock_embedding_provider_differs_for_different_inputs",
+     "test_mock_embedding_provider_is_deterministic",
+     "test_mock_embedding_provider_returns_unit_vector",
+     "test_mock_embedding_provider_satisfies_protocol",
+     "test_offline_calibration_uses_deterministic_fixture_labels",
+     "test_organism_core_mind_persists_state_and_telemetry",
+     "test_triadic_matches_canonical_fixture"
+    ],
+    "read": [
+     "symbol_02"
+    ],
+    "repo": "repo-13"
+   },
+   "kind": "surface"
+  },
+  {
+   "because": "a repo cannot know which of its exports are read elsewhere; the consumers cannot know what else it offers",
+   "claim": "the ecosystem reads 1 of 103 public symbol(s) `repo-20` offers \u2014 `repo-20`'s unread surface is the rest",
+   "evidence": {
+    "offered": [
+     "BenchmarkHarness",
+     "CoreEngine",
+     "EndpointDef",
+     "EndpointSpec",
+     "EvaluationRequest",
+     "EvaluationResult",
+     "symbol_01",
+     "FitnessResult",
+     "GovernanceLayer",
+     "InferenceResult",
+     "PrimitiveCallRequest",
+     "PrimitiveRegistry",
+     "ProductFamily",
+     "SIAv6Engine",
+     "agent_list",
+     "agent_profile",
+     "agent_promote",
+     "agent_spawn",
+     "agent_status",
+     "agent_terminate",
+     "call_primitive",
+     "crypto_hash",
+     "crypto_identity",
+     "crypto_receipt",
+     "evolution_cycle",
+     "evolution_fitness",
+     "evolution_mutate",
+     "evolution_select",
+     "governance_audit",
+     "governance_enforce",
+     "governance_escalate",
+     "governance_evaluate",
+     "governance_veto",
+     "learning_integrate",
+     "learning_propose",
+     "learning_verify",
+     "list_primitives",
+     "memory_delete",
+     "memory_flush",
+     "memory_read",
+     "memory_search",
+     "memory_summarize",
+     "memory_write",
+     "organism_cycle",
+     "organism_health",
+     "organism_metrics",
+     "organism_state",
+     "organism_telemetry",
+     "ping",
+     "reg",
+     "routing_compile",
+     "routing_dispatch",
+     "routing_law_list",
+     "seed_evolution_rng",
+     "signal_classify",
+     "signal_filter",
+     "signal_hash",
+     "signal_merge",
+     "signal_normalize",
+     "signal_rank",
+     "signal_score",
+     "status",
+     "test_all_families_have_endpoints",
+     "test_all_families_have_targets",
+     "test_benchmark_pass_field",
+     "test_benchmark_runs_without_error",
+     "test_crypto_hash_and_verify",
+     "test_endpoint_paths_are_unique",
+     "test_endpoint_registry_has_77_entries",
+     "test_engine_batch_infer",
+     "test_engine_fitness_eval",
+     "test_engine_fitness_eval_defaults",
+     "test_engine_governance_evaluate",
+     "test_engine_has_checks",
+     "test_engine_infer_all_families",
+     "test_engine_infer_unknown_family",
+     "test_engine_lists_all_primitives",
+     "test_engine_metrics",
+     "test_engine_organism_health",
+     "test_engine_system_status",
+     "test_evolution_mutate_bounded",
+     "test_evolution_mutate_seed_is_reproducible",
+     "test_evolution_mutate_shared_rng_seedable",
+     "test_governance_evaluate_approve",
+     "test_governance_evaluate_reject",
+     "test_learning_verify_threshold",
+     "test_memory_write_read_delete",
+     "test_missing_primitive_raises",
+     "test_organism_health_formula",
+     "test_registry_has_69_live_primitives",
+     "test_signal_classify",
+     "test_signal_hash_deterministic",
+     "test_signal_normalize",
+     "test_sixteen_product_families",
+     "test_triadic_delta",
+     "triadic_coherence",
+     "triadic_delta",
+     "triadic_invert",
+     "triadic_resolve",
+     "version",
+     "yield_distribute",
+     "yield_generate",
+     "yield_sweep"
+    ],
+    "read": [
+     "symbol_01"
+    ],
+    "repo": "repo-20"
+   },
+   "kind": "surface"
+  },
+  {
+   "because": "each pair relationship is visible pairwise; the connected family only exists when all pairs are known at once",
+   "claim": "3 repositories share byte-identical content: `repo-08`, `repo-18`, `repo-19` \u2014 a family, not a pair",
+   "evidence": {
+    "members": [
+     "repo-08",
+     "repo-18",
+     "repo-19"
+    ]
+   },
+   "kind": "constellation"
+  },
+  {
+   "because": "each pair relationship is visible pairwise; the connected family only exists when all pairs are known at once",
+   "claim": "3 repositories share byte-identical content: `repo-06`, `repo-07`, `repo-10` \u2014 a family, not a pair",
+   "evidence": {
+    "members": [
+     "repo-06",
+     "repo-07",
+     "repo-10"
+    ]
+   },
+   "kind": "constellation"
+  }
+ ],
+ "findings": [
+  {
+   "kind": "UNDECLARED_DEPENDENCY",
+   "severity": "high",
+   "summary": "repo-05 imports repo-01 at 1 site(s) but declares no dependency on it",
+   "witnesses": [
+    {
+     "file": "src/mod_cb0b1e.ts",
+     "line": 242,
+     "repo": "repo-05",
+     "statement": "../../repo-01/"
+    },
+    {
+     "repo": "repo-05",
+     "statement": "declared: ['@example/genai', '@example/sdk', '@example/post-quantum', '@example/vite', '@example/body-parser', '@example/express', '@example/http-errors', '@example/node', '@example/qs', '@example/range-parser', '@example/react', '@example/react-dom', '@example/send', '@example/plugin-react', 'autoprefixer', 'dotenv', 'esbuild', 'ethers', 'express', 'fast-check', 'jspdf', 'lucide-react', 'motion', 'react', 'react-dom', 'tailwindcss', 'tsx', 'typescript', 'vite', 'vitest']"
+    }
+   ]
+  },
+  {
+   "kind": "UNDECLARED_DEPENDENCY",
+   "severity": "high",
+   "summary": "repo-05 imports repo-04 at 4 site(s) but declares no dependency on it",
+   "witnesses": [
+    {
+     "file": "server.ts",
+     "line": 52,
+     "repo": "repo-05",
+     "statement": "../repo-04/"
+    },
+    {
+     "file": "src/mod_2737c4.ts",
+     "line": 95,
+     "repo": "repo-05",
+     "statement": "../repo-04/"
+    },
+    {
+     "file": "src/mod_8cfead.ts",
+     "line": 45,
+     "repo": "repo-05",
+     "statement": "../repo-04/"
+    },
+    {
+     "repo": "repo-05",
+     "statement": "declared: ['@example/genai', '@example/sdk', '@example/post-quantum', '@example/vite', '@example/body-parser', '@example/express', '@example/http-errors', '@example/node', '@example/qs', '@example/range-parser', '@example/react', '@example/react-dom', '@example/send', '@example/plugin-react', 'autoprefixer', 'dotenv', 'esbuild', 'ethers', 'express', 'fast-check', 'jspdf', 'lucide-react', 'motion', 'react', 'react-dom', 'tailwindcss', 'tsx', 'typescript', 'vite', 'vitest']"
+    }
+   ]
+  },
+  {
+   "kind": "UNDECLARED_DEPENDENCY",
+   "severity": "high",
+   "summary": "repo-06 imports repo-05 at 2 site(s) but declares no dependency on it",
+   "witnesses": [
+    {
+     "file": "src/mod_3f5ce2.ts",
+     "line": 24,
+     "repo": "repo-06",
+     "statement": "../repo-05/"
+    },
+    {
+     "file": "src/mod_3f5ce2.ts",
+     "line": 104,
+     "repo": "repo-06",
+     "statement": "../repo-05/"
+    },
+    {
+     "repo": "repo-06",
+     "statement": "declared: ['@example/bigquery', '@example/run', '@example/storage', '@example/renderer', '@example/connectors-sdk', '@example/react-query', '@example/node', 'esbuild', 'fastapi==0.115.0', 'google-auth-library', 'numpy==1.26.4', 'numpy>=1.26,<2.0', 'numpy>=1.26,<3', 'orval', 'prettier', 'psycopg2-binary==2.9.9', 'psycopg2-binary>=2.9,<3.0', 'pydantic==2.9.0', 'react', 'react-dom', 'requests>=2.31,<3.0', 'scipy>=1.12,<2.0', 'tsx', 'typescript', 'uvicorn[standard]==0.30.0', 'zod']"
+    }
+   ]
+  },
+  {
+   "kind": "UNDECLARED_DEPENDENCY",
+   "severity": "high",
+   "summary": "repo-11 imports repo-04 at 1 site(s) but declares no dependency on it",
+   "witnesses": [
+    {
+     "file": "src/mod_805c71.py",
+     "line": 62,
+     "repo": "repo-11",
+     "statement": "../repo-04/"
+    },
+    {
+     "repo": "repo-11",
+     "statement": "declared: ['httpx>=0.27', 'pytest>=7', 'repo-20 @ git+https://example.com/redacted']"
+    }
+   ]
+  },
+  {
+   "kind": "UNDECLARED_DEPENDENCY",
+   "severity": "high",
+   "summary": "repo-11 imports repo-13 at 3 site(s) but declares no dependency on it",
+   "witnesses": [
+    {
+     "file": "src/mod_235554.py",
+     "line": 23,
+     "repo": "repo-11",
+     "statement": "polygraph.core.arbiter_kernel"
+    },
+    {
+     "file": "src/mod_445f63.py",
+     "line": 42,
+     "repo": "repo-11",
+     "statement": "polygraph.core.arbiter_kernel"
+    },
+    {
+     "file": "src/mod_31a5ac.py",
+     "line": 49,
+     "repo": "repo-11",
+     "statement": "polygraph.core.arbiter_kernel"
+    },
+    {
+     "repo": "repo-11",
+     "statement": "declared: ['httpx>=0.27', 'pytest>=7', 'repo-20 @ git+https://example.com/redacted']"
+    }
+   ]
+  },
+  {
+   "kind": "UNDECLARED_DEPENDENCY",
+   "severity": "high",
+   "summary": "repo-16 imports repo-19 at 1 site(s) but declares no dependency on it",
+   "witnesses": [
+    {
+     "file": "src/mod_cfe658.js",
+     "line": 8,
+     "repo": "repo-16",
+     "statement": "../../repo-19/"
+    },
+    {
+     "repo": "repo-16",
+     "statement": "declared: ['express', 'ws']"
+    }
+   ]
+  },
+  {
+   "kind": "DECLARATION_MISMATCH",
+   "severity": "high",
+   "summary": "repo-11 declares a dependency on repo-20 at github.com/example/, but it is actually hosted at github.com/example/",
+   "witnesses": [
+    {
+     "repo": "repo-11",
+     "statement": "repo-20 @ git+https://example.com/redacted"
+    },
+    {
+     "repo": "local",
+     "statement": "actual owner of repo-20"
+    }
+   ]
+  },
+  {
+   "kind": "NO_CONSUMERS",
+   "severity": "medium",
+   "summary": "nothing in the ecosystem imports from repo-02",
+   "witnesses": [
+    {
+     "repo": "repo-02",
+     "statement": "no incoming cross-repo imports"
+    }
+   ]
+  },
+  {
+   "kind": "NO_CONSUMERS",
+   "severity": "medium",
+   "summary": "nothing in the ecosystem imports from repo-03",
+   "witnesses": [
+    {
+     "repo": "repo-03",
+     "statement": "no incoming cross-repo imports"
+    }
+   ]
+  },
+  {
+   "kind": "NO_CONSUMERS",
+   "severity": "medium",
+   "summary": "nothing in the ecosystem imports from repo-06",
+   "witnesses": [
+    {
+     "repo": "repo-06",
+     "statement": "no incoming cross-repo imports"
+    }
+   ]
+  },
+  {
+   "kind": "NO_CONSUMERS",
+   "severity": "medium",
+   "summary": "nothing in the ecosystem imports from repo-07",
+   "witnesses": [
+    {
+     "repo": "repo-07",
+     "statement": "no incoming cross-repo imports"
+    }
+   ]
+  },
+  {
+   "kind": "NO_CONSUMERS",
+   "severity": "medium",
+   "summary": "nothing in the ecosystem imports from repo-08",
+   "witnesses": [
+    {
+     "repo": "repo-08",
+     "statement": "no incoming cross-repo imports"
+    }
+   ]
+  },
+  {
+   "kind": "NO_CONSUMERS",
+   "severity": "medium",
+   "summary": "nothing in the ecosystem imports from repo-09",
+   "witnesses": [
+    {
+     "repo": "repo-09",
+     "statement": "no incoming cross-repo imports"
+    }
+   ]
+  },
+  {
+   "kind": "NO_CONSUMERS",
+   "severity": "medium",
+   "summary": "nothing in the ecosystem imports from repo-10",
+   "witnesses": [
+    {
+     "repo": "repo-10",
+     "statement": "no incoming cross-repo imports"
+    }
+   ]
+  },
+  {
+   "kind": "NO_CONSUMERS",
+   "severity": "medium",
+   "summary": "nothing in the ecosystem imports from repo-11",
+   "witnesses": [
+    {
+     "repo": "repo-11",
+     "statement": "no incoming cross-repo imports"
+    }
+   ]
+  },
+  {
+   "kind": "NO_CONSUMERS",
+   "severity": "medium",
+   "summary": "nothing in the ecosystem imports from repo-12",
+   "witnesses": [
+    {
+     "repo": "repo-12",
+     "statement": "no incoming cross-repo imports"
+    }
+   ]
+  },
+  {
+   "kind": "NO_CONSUMERS",
+   "severity": "medium",
+   "summary": "nothing in the ecosystem imports from repo-14",
+   "witnesses": [
+    {
+     "repo": "repo-14",
+     "statement": "no incoming cross-repo imports"
+    }
+   ]
+  },
+  {
+   "kind": "NO_CONSUMERS",
+   "severity": "medium",
+   "summary": "nothing in the ecosystem imports from repo-15",
+   "witnesses": [
+    {
+     "repo": "repo-15",
+     "statement": "no incoming cross-repo imports"
+    }
+   ]
+  },
+  {
+   "kind": "NO_CONSUMERS",
+   "severity": "medium",
+   "summary": "nothing in the ecosystem imports from repo-16",
+   "witnesses": [
+    {
+     "repo": "repo-16",
+     "statement": "no incoming cross-repo imports"
+    }
+   ]
+  },
+  {
+   "kind": "NO_CONSUMERS",
+   "severity": "medium",
+   "summary": "nothing in the ecosystem imports from repo-17",
+   "witnesses": [
+    {
+     "repo": "repo-17",
+     "statement": "no incoming cross-repo imports"
+    }
+   ]
+  },
+  {
+   "kind": "NO_CONSUMERS",
+   "severity": "medium",
+   "summary": "nothing in the ecosystem imports from repo-18",
+   "witnesses": [
+    {
+     "repo": "repo-18",
+     "statement": "no incoming cross-repo imports"
+    }
+   ]
+  }
+ ],
+ "forks": [
+  {
+   "a": "repo-18",
+   "b": "repo-19",
+   "identical_files": 421,
+   "pct_of_smaller_repo": 91.7,
+   "shared_paths": 852,
+   "verdict": "fork",
+   "witnesses": [
+    {
+     "a_path": "tier1/amazon-product-scraper/.actor/actor.json",
+     "b_path": "tier1/amazon-product-scraper/.actor/actor.json",
+     "identical": true,
+     "suffix": "amazon-product-scraper/.actor/actor.json"
+    },
+    {
+     "a_path": "tier1/amazon-product-scraper/.actor/input_schema.json",
+     "b_path": "tier1/amazon-product-scraper/.actor/input_schema.json",
+     "identical": true,
+     "suffix": "amazon-product-scraper/.actor/input_schema.json"
+    },
+    {
+     "a_path": "tier1/amazon-product-scraper/.actor/output_schema.json",
+     "b_path": "tier1/amazon-product-scraper/.actor/output_schema.json",
+     "identical": true,
+     "suffix": "amazon-product-scraper/.actor/output_schema.json"
+    },
+    {
+     "a_path": "tier1/amazon-product-scraper/Dockerfile",
+     "b_path": "tier1/amazon-product-scraper/Dockerfile",
+     "identical": true,
+     "suffix": "amazon-product-scraper/Dockerfile"
+    },
+    {
+     "a_path": "tier1/amazon-product-scraper/package.json",
+     "b_path": "tier1/amazon-product-scraper/package.json",
+     "identical": true,
+     "suffix": "amazon-product-scraper/package.json"
+    },
+    {
+     "a_path": "tier1/amazon-review-scraper/.actor/actor.json",
+     "b_path": "tier1/amazon-review-scraper/.actor/actor.json",
+     "identical": true,
+     "suffix": "amazon-review-scraper/.actor/actor.json"
+    },
+    {
+     "a_path": "tier1/amazon-review-scraper/.actor/input_schema.json",
+     "b_path": "tier1/amazon-review-scraper/.actor/input_schema.json",
+     "identical": true,
+     "suffix": "amazon-review-scraper/.actor/input_schema.json"
+    },
+    {
+     "a_path": "tier1/amazon-review-scraper/.actor/output_schema.json",
+     "b_path": "tier1/amazon-review-scraper/.actor/output_schema.json",
+     "identical": true,
+     "suffix": "amazon-review-scraper/.actor/output_schema.json"
+    },
+    {
+     "a_path": "tier1/amazon-review-scraper/Dockerfile",
+     "b_path": "tier1/amazon-review-scraper/Dockerfile",
+     "identical": true,
+     "suffix": "amazon-review-scraper/Dockerfile"
+    },
+    {
+     "a_path": "tier1/amazon-review-scraper/package.json",
+     "b_path": "tier1/amazon-review-scraper/package.json",
+     "identical": true,
+     "suffix": "amazon-review-scraper/package.json"
+    },
+    {
+     "a_path": "tier1/amazon-review-scraper/src/main.js",
+     "b_path": "tier1/amazon-review-scraper/src/main.js",
+     "identical": true,
+     "suffix": "amazon-review-scraper/src/main.js"
+    },
+    {
+     "a_path": "tier2/app-store-review-scraper/.actor/actor.json",
+     "b_path": "tier2/app-store-review-scraper/.actor/actor.json",
+     "identical": true,
+     "suffix": "app-store-review-scraper/.actor/actor.json"
+    }
+   ]
+  },
+  {
+   "a": "repo-06",
+   "b": "repo-07",
+   "identical_files": 131,
+   "pct_of_smaller_repo": 48.3,
+   "shared_paths": 315,
+   "verdict": "fork",
+   "witnesses": [
+    {
+     "a_path": "sia-v6-platform/agent/AGENT_MANIFEST.md",
+     "b_path": "agent/AGENT_MANIFEST.md",
+     "identical": true,
+     "suffix": "agent/AGENT_MANIFEST.md"
+    },
+    {
+     "a_path": "sia-v6-platform/agent/path_a/job_config.yaml",
+     "b_path": "agent/path_a/job_config.yaml",
+     "identical": true,
+     "suffix": "agent/path_a/job_config.yaml"
+    },
+    {
+     "a_path": "sia-v6-platform/agent/path_a/ratchet_engine.py",
+     "b_path": "agent/path_a/ratchet_engine.py",
+     "identical": true,
+     "suffix": "agent/path_a/ratchet_engine.py"
+    },
+    {
+     "a_path": "sia-v6-platform/agent/path_a/ratchet_job.py",
+     "b_path": "agent/path_a/ratchet_job.py",
+     "identical": true,
+     "suffix": "agent/path_a/ratchet_job.py"
+    },
+    {
+     "a_path": "sia-v6-platform/agent/path_a/tests/test_ratchet.py",
+     "b_path": "agent/path_a/tests/test_ratchet.py",
+     "identical": true,
+     "suffix": "agent/path_a/tests/test_ratchet.py"
+    },
+    {
+     "a_path": "sia-v6-platform/agent/path_b/job_config.yaml",
+     "b_path": "agent/path_b/job_config.yaml",
+     "identical": true,
+     "suffix": "agent/path_b/job_config.yaml"
+    },
+    {
+     "a_path": "sia-v6-platform/agent/path_b/persistence_memory.py",
+     "b_path": "agent/path_b/persistence_memory.py",
+     "identical": true,
+     "suffix": "agent/path_b/persistence_memory.py"
+    },
+    {
+     "a_path": "sia-v6-platform/agent/path_b/tests/test_topology.py",
+     "b_path": "agent/path_b/tests/test_topology.py",
+     "identical": true,
+     "suffix": "agent/path_b/tests/test_topology.py"
+    },
+    {
+     "a_path": "sia-v6-platform/agent/path_b/topology_agent.py",
+     "b_path": "agent/path_b/topology_agent.py",
+     "identical": true,
+     "suffix": "agent/path_b/topology_agent.py"
+    },
+    {
+     "a_path": "sia-v6-platform/agent/path_b/topology_job.py",
+     "b_path": "agent/path_b/topology_job.py",
+     "identical": true,
+     "suffix": "agent/path_b/topology_job.py"
+    },
+    {
+     "a_path": "sia-v6-platform/agent/path_c/job_config.yaml",
+     "b_path": "agent/path_c/job_config.yaml",
+     "identical": true,
+     "suffix": "agent/path_c/job_config.yaml"
+    },
+    {
+     "a_path": "sia-v6-platform/agent/path_c/rg_job.py",
+     "b_path": "agent/path_c/rg_job.py",
+     "identical": true,
+     "suffix": "agent/path_c/rg_job.py"
+    }
+   ]
+  },
+  {
+   "a": "repo-06",
+   "b": "repo-10",
+   "identical_files": 11,
+   "pct_of_smaller_repo": 8.1,
+   "shared_paths": 152,
+   "verdict": "shared_content",
+   "witnesses": [
+    {
+     "a_path": "sia-v6-platform/artifacts/github-audit/src/components/ui/aspect-ratio.tsx",
+     "b_path": "client/src/components/ui/aspect-ratio.tsx",
+     "identical": true,
+     "suffix": "components/ui/aspect-ratio.tsx"
+    },
+    {
+     "a_path": "sia-v6-platform/artifacts/github-audit/src/components/ui/breadcrumb.tsx",
+     "b_path": "client/src/components/ui/breadcrumb.tsx",
+     "identical": true,
+     "suffix": "components/ui/breadcrumb.tsx"
+    },
+    {
+     "a_path": "sia-v6-platform/artifacts/github-audit/src/components/ui/collapsible.tsx",
+     "b_path": "client/src/components/ui/collapsible.tsx",
+     "identical": true,
+     "suffix": "components/ui/collapsible.tsx"
+    },
+    {
+     "a_path": "sia-v6-platform/artifacts/github-audit/src/components/ui/resizable.tsx",
+     "b_path": "client/src/components/ui/resizable.tsx",
+     "identical": true,
+     "suffix": "components/ui/resizable.tsx"
+    },
+    {
+     "a_path": "sia-v6-platform/artifacts/github-audit/src/components/ui/scroll-area.tsx",
+     "b_path": "client/src/components/ui/scroll-area.tsx",
+     "identical": true,
+     "suffix": "components/ui/scroll-area.tsx"
+    },
+    {
+     "a_path": "sia-v6-platform/artifacts/github-audit/src/components/ui/separator.tsx",
+     "b_path": "client/src/components/ui/separator.tsx",
+     "identical": true,
+     "suffix": "components/ui/separator.tsx"
+    },
+    {
+     "a_path": "sia-v6-platform/artifacts/github-audit/src/components/ui/sidebar.tsx",
+     "b_path": "client/src/components/ui/sidebar.tsx",
+     "identical": true,
+     "suffix": "components/ui/sidebar.tsx"
+    },
+    {
+     "a_path": "sia-v6-platform/artifacts/github-audit/src/components/ui/toaster.tsx",
+     "b_path": "client/src/components/ui/toaster.tsx",
+     "identical": true,
+     "suffix": "components/ui/toaster.tsx"
+    },
+    {
+     "a_path": "sia-v6-platform/artifacts/github-audit/src/hooks/use-mobile.tsx",
+     "b_path": "client/src/hooks/use-mobile.tsx",
+     "identical": true,
+     "suffix": "hooks/use-mobile.tsx"
+    },
+    {
+     "a_path": "sia-v6-platform/artifacts/github-audit/src/hooks/use-toast.ts",
+     "b_path": "client/src/hooks/use-toast.ts",
+     "identical": true,
+     "suffix": "hooks/use-toast.ts"
+    },
+    {
+     "a_path": "sia-v6-platform/artifacts/github-audit/src/pages/not-found.tsx",
+     "b_path": "client/src/pages/not-found.tsx",
+     "identical": true,
+     "suffix": "pages/not-found.tsx"
+    },
+    {
+     "a_path": "sia-v6-platform/artifacts/github-audit/src/components/ui/aspect-ratio.tsx",
+     "b_path": "client/src/components/ui/aspect-ratio.tsx",
+     "identical": true,
+     "suffix": "src/components/ui/aspect-ratio.tsx"
+    }
+   ]
+  },
+  {
+   "a": "repo-02",
+   "b": "repo-05",
+   "identical_files": 1,
+   "pct_of_smaller_repo": 0.8,
+   "shared_paths": 6,
+   "verdict": "shared_content",
+   "witnesses": [
+    {
+     "a_path": "src/main.tsx",
+     "b_path": "src/main.tsx",
+     "identical": true,
+     "suffix": "src/main.tsx"
+    },
+    {
+     "a_path": ".continue/config.json",
+     "b_path": ".continue/config.json",
+     "identical": false,
+     "suffix": ".continue/config.json"
+    },
+    {
+     "a_path": "src/App.tsx",
+     "b_path": "src/App.tsx",
+     "identical": false,
+     "suffix": "src/App.tsx"
+    },
+    {
+     "a_path": "src/foundry.ts",
+     "b_path": "src/foundry.ts",
+     "identical": false,
+     "suffix": "src/foundry.ts"
+    },
+    {
+     "a_path": "src/index.css",
+     "b_path": "src/index.css",
+     "identical": false,
+     "suffix": "src/index.css"
+    },
+    {
+     "a_path": "src/types.ts",
+     "b_path": "src/types.ts",
+     "identical": false,
+     "suffix": "src/types.ts"
+    }
+   ]
+  },
+  {
+   "a": "repo-08",
+   "b": "repo-19",
+   "identical_files": 1,
+   "pct_of_smaller_repo": 9.1,
+   "shared_paths": 2,
+   "verdict": "shared_content",
+   "witnesses": [
+    {
+     "a_path": ".github/workflows/test.yml",
+     "b_path": ".github/workflows/test.yml",
+     "identical": true,
+     "suffix": ".github/workflows/test.yml"
+    },
+    {
+     "a_path": ".github/workflows/test.yml",
+     "b_path": ".github/workflows/test.yml",
+     "identical": true,
+     "suffix": "workflows/test.yml"
+    }
+   ]
+  },
+  {
+   "a": "repo-11",
+   "b": "repo-13",
+   "identical_files": 1,
+   "pct_of_smaller_repo": 3.4,
+   "shared_paths": 3,
+   "verdict": "shared_content",
+   "witnesses": [
+    {
+     "a_path": "test/fixtures/triadic-conformance.json",
+     "b_path": "test/fixtures/triadic-conformance.json",
+     "identical": true,
+     "suffix": "fixtures/triadic-conformance.json"
+    },
+    {
+     "a_path": "test/fixtures/triadic-conformance.json",
+     "b_path": "test/fixtures/triadic-conformance.json",
+     "identical": true,
+     "suffix": "test/fixtures/triadic-conformance.json"
+    },
+    {
+     "a_path": "test/test_triadic_conformance.py",
+     "b_path": "test/test_triadic_conformance.py",
+     "identical": false,
+     "suffix": "test/test_triadic_conformance.py"
+    }
+   ]
+  }
+ ],
+ "headline": {
+  "cross_repo_edges": 7,
+  "distinct_symbols_crossing": 2,
+  "external_packages": 487,
+  "import_sites": 13,
+  "repos_analyzed": 20,
+  "repos_connected": 9,
+  "repos_orphaned": 11
+ },
+ "invisible_coupling": [
+  {
+   "a": "repo-06",
+   "b": "repo-07",
+   "count": 31,
+   "identifiers": [
+    "SHARED_ENV_01",
+    "SHARED_ENV_03",
+    "SHARED_ENV_04",
+    "SHARED_ENV_05",
+    "SHARED_ENV_06",
+    "SHARED_ENV_07",
+    "SHARED_ENV_08",
+    "SHARED_ENV_09",
+    "GCP_PROJECT",
+    "GCP_REGION",
+    "JOB_NAME",
+    "PERSONA_WEIGHTS",
+    "PGPASSWORD",
+    "SCHEDULE",
+    "SIA_ENDPOINT",
+    "SOVEREIGN_OVERRIDE_KEY",
+    "VERTEX_MODEL",
+    "SHARED_TABLE_01",
+    "SHARED_TABLE_02",
+    "SHARED_TABLE_03",
+    "SHARED_TABLE_04",
+    "SHARED_TABLE_05",
+    "SHARED_TABLE_06",
+    "SHARED_TABLE_07",
+    "SHARED_TABLE_08",
+    "s_842_gold_reconstruction",
+    "s_850_thesis_identity_map",
+    "s_852_savage_diamond",
+    "s_coupling_matrix",
+    "s_persona_weights",
+    "s_state_vectors"
+   ],
+   "kinds": [
+    "env",
+    "table"
+   ],
+   "witnesses": [
+    {
+     "at": {
+      "file": "src/mod_5c29dd.sh",
+      "line": 41,
+      "repo": "repo-06"
+     },
+     "at_other": {
+      "file": "src/mod_67e265.py",
+      "line": 24,
+      "repo": "repo-07"
+     },
+     "identifier": "SHARED_ENV_01",
+     "kind": "env"
+    },
+    {
+     "at": {
+      "file": "src/mod_8525d7.py",
+      "line": 8,
+      "repo": "repo-06"
+     },
+     "at_other": {
+      "file": "src/mod_67e265.py",
+      "line": 25,
+      "repo": "repo-07"
+     },
+     "identifier": "SHARED_ENV_03",
+     "kind": "env"
+    },
+    {
+     "at": {
+      "file": "src/mod_1c680a.py",
+      "line": 74,
+      "repo": "repo-06"
+     },
+     "at_other": {
+      "file": "src/mod_37df70.py",
+      "line": 65,
+      "repo": "repo-07"
+     },
+     "identifier": "SHARED_ENV_04",
+     "kind": "env"
+    },
+    {
+     "at": {
+      "file": "src/mod_1c680a.py",
+      "line": 76,
+      "repo": "repo-06"
+     },
+     "at_other": {
+      "file": "src/mod_37df70.py",
+      "line": 67,
+      "repo": "repo-07"
+     },
+     "identifier": "SHARED_ENV_05",
+     "kind": "env"
+    },
+    {
+     "at": {
+      "file": "src/mod_5c29dd.sh",
+      "line": 40,
+      "repo": "repo-06"
+     },
+     "at_other": {
+      "file": "src/mod_fc893c.py",
+      "line": 65,
+      "repo": "repo-07"
+     },
+     "identifier": "SHARED_ENV_06",
+     "kind": "env"
+    },
+    {
+     "at": {
+      "file": "src/mod_1c680a.py",
+      "line": 75,
+      "repo": "repo-06"
+     },
+     "at_other": {
+      "file": "src/mod_37df70.py",
+      "line": 66,
+      "repo": "repo-07"
+     },
+     "identifier": "SHARED_ENV_07",
+     "kind": "env"
+    },
+    {
+     "at": {
+      "file": "src/mod_1c680a.py",
+      "line": 77,
+      "repo": "repo-06"
+     },
+     "at_other": {
+      "file": "src/mod_37df70.py",
+      "line": 68,
+      "repo": "repo-07"
+     },
+     "identifier": "SHARED_ENV_08",
+     "kind": "env"
+    },
+    {
+     "at": {
+      "file": "src/mod_da5d7d.sh",
+      "line": 49,
+      "repo": "repo-06"
+     },
+     "at_other": {
+      "file": "src/mod_db78ab.sh",
+      "line": 49,
+      "repo": "repo-07"
+     },
+     "identifier": "SHARED_ENV_09",
+     "kind": "env"
+    },
+    {
+     "at": {
+      "file": "src/mod_aa0301.py",
+      "line": 310,
+      "repo": "repo-06"
+     },
+     "at_other": {
+      "file": "src/mod_0320d2.py",
+      "line": 310,
+      "repo": "repo-07"
+     },
+     "identifier": "SHARED_TABLE_01",
+     "kind": "table"
+    },
+    {
+     "at": {
+      "file": "src/mod_55c28a.sh",
+      "line": 124,
+      "repo": "repo-06"
+     },
+     "at_other": {
+      "file": "src/mod_5ca7df.py",
+      "line": 30,
+      "repo": "repo-07"
+     },
+     "identifier": "SHARED_TABLE_02",
+     "kind": "table"
+    },
+    {
+     "at": {
+      "file": "src/mod_f5a937.py",
+      "line": 61,
+      "repo": "repo-06"
+     },
+     "at_other": {
+      "file": "src/mod_5ca7df.py",
+      "line": 61,
+      "repo": "repo-07"
+     },
+     "identifier": "SHARED_TABLE_03",
+     "kind": "table"
+    },
+    {
+     "at": {
+      "file": "src/mod_da1a18.sh",
+      "line": 18,
+      "repo": "repo-06"
+     },
+     "at_other": {
+      "file": "src/mod_5ca7df.py",
+      "line": 77,
+      "repo": "repo-07"
+     },
+     "identifier": "SHARED_TABLE_04",
+     "kind": "table"
+    },
+    {
+     "at": {
+      "file": "src/mod_1c680a.py",
+      "line": 98,
+      "repo": "repo-06"
+     },
+     "at_other": {
+      "file": "src/mod_37df70.py",
+      "line": 88,
+      "repo": "repo-07"
+     },
+     "identifier": "SHARED_TABLE_05",
+     "kind": "table"
+    },
+    {
+     "at": {
+      "file": "src/mod_1c680a.py",
+      "line": 113,
+      "repo": "repo-06"
+     },
+     "at_other": {
+      "file": "src/mod_37df70.py",
+      "line": 102,
+      "repo": "repo-07"
+     },
+     "identifier": "SHARED_TABLE_06",
+     "kind": "table"
+    },
+    {
+     "at": {
+      "file": "src/mod_f251c8.py",
+      "line": 343,
+      "repo": "repo-06"
+     },
+     "at_other": {
+      "file": "src/mod_ca32a9.py",
+      "line": 343,
+      "repo": "repo-07"
+     },
+     "identifier": "SHARED_TABLE_07",
+     "kind": "table"
+    },
+    {
+     "at": {
+      "file": "src/mod_f5a937.py",
+      "line": 123,
+      "repo": "repo-06"
+     },
+     "at_other": {
+      "file": "src/mod_5ca7df.py",
+      "line": 123,
+      "repo": "repo-07"
+     },
+     "identifier": "SHARED_TABLE_08",
+     "kind": "table"
+    }
+   ]
+  },
+  {
+   "a": "repo-06",
+   "b": "repo-16",
+   "count": 4,
+   "identifiers": [
+    "SHARED_ENV_01",
+    "SHARED_ENV_03",
+    "SHARED_ENV_13",
+    "SHARED_ENV_19"
+   ],
+   "kinds": [
+    "env"
+   ],
+   "witnesses": [
+    {
+     "at": {
+      "file": "src/mod_5c29dd.sh",
+      "line": 41,
+      "repo": "repo-06"
+     },
+     "at_other": {
+      "file": "server.js",
+      "line": 158,
+      "repo": "repo-16"
+     },
+     "identifier": "SHARED_ENV_01",
+     "kind": "env"
+    },
+    {
+     "at": {
+      "file": "src/mod_8525d7.py",
+      "line": 8,
+      "repo": "repo-06"
+     },
+     "at_other": {
+      "file": "src/mod_ea8e29.js",
+      "line": 11,
+      "repo": "repo-16"
+     },
+     "identifier": "SHARED_ENV_03",
+     "kind": "env"
+    },
+    {
+     "at": {
+      "file": "src/mod_5f7d31.ts",
+      "line": 20,
+      "repo": "repo-06"
+     },
+     "at_other": {
+      "file": "src/mod_406210.js",
+      "line": 5,
+      "repo": "repo-16"
+     },
+     "identifier": "SHARED_ENV_13",
+     "kind": "env"
+    },
+    {
+     "at": {
+      "file": "src/mod_f20765.ts",
+      "line": 55,
+      "repo": "repo-06"
+     },
+     "at_other": {
+      "file": "src/mod_685bb9.js",
+      "line": 11,
+      "repo": "repo-16"
+     },
+     "identifier": "SHARED_ENV_19",
+     "kind": "env"
+    }
+   ]
+  },
+  {
+   "a": "repo-18",
+   "b": "repo-19",
+   "count": 3,
+   "identifiers": [
+    "SHARED_ENV_14",
+    "SHARED_ENV_17",
+    "SHARED_ENV_18"
+   ],
+   "kinds": [
+    "env"
+   ],
+   "witnesses": [
+    {
+     "at": {
+      "file": "src/mod_e765c5.js",
+      "line": 7,
+      "repo": "repo-18"
+     },
+     "at_other": {
+      "file": "src/mod_e765c5.js",
+      "line": 7,
+      "repo": "repo-19"
+     },
+     "identifier": "SHARED_ENV_14",
+     "kind": "env"
+    },
+    {
+     "at": {
+      "file": "src/mod_15165e.js",
+      "line": 5,
+      "repo": "repo-18"
+     },
+     "at_other": {
+      "file": "src/mod_15165e.js",
+      "line": 5,
+      "repo": "repo-19"
+     },
+     "identifier": "SHARED_ENV_17",
+     "kind": "env"
+    },
+    {
+     "at": {
+      "file": "src/mod_419a94.mjs",
+      "line": 87,
+      "repo": "repo-18"
+     },
+     "at_other": {
+      "file": "src/mod_419a94.mjs",
+      "line": 72,
+      "repo": "repo-19"
+     },
+     "identifier": "SHARED_ENV_18",
+     "kind": "env"
+    }
+   ]
+  },
+  {
+   "a": "repo-01",
+   "b": "repo-16",
+   "count": 2,
+   "identifiers": [
+    "SHARED_ENV_11",
+    "SHARED_ENV_13"
+   ],
+   "kinds": [
+    "env"
+   ],
+   "witnesses": [
+    {
+     "at": {
+      "file": "src/mod_24adbd.ts",
+      "line": 24,
+      "repo": "repo-01"
+     },
+     "at_other": {
+      "file": "src/mod_406210.js",
+      "line": 7,
+      "repo": "repo-16"
+     },
+     "identifier": "SHARED_ENV_11",
+     "kind": "env"
+    },
+    {
+     "at": {
+      "file": "src/mod_24adbd.ts",
+      "line": 30,
+      "repo": "repo-01"
+     },
+     "at_other": {
+      "file": "src/mod_406210.js",
+      "line": 5,
+      "repo": "repo-16"
+     },
+     "identifier": "SHARED_ENV_13",
+     "kind": "env"
+    }
+   ]
+  },
+  {
+   "a": "repo-05",
+   "b": "repo-06",
+   "count": 2,
+   "identifiers": [
+    "SHARED_ENV_15",
+    "SHARED_ENV_20"
+   ],
+   "kinds": [
+    "env"
+   ],
+   "witnesses": [
+    {
+     "at": {
+      "file": "src/mod_587f78.ts",
+      "line": 114,
+      "repo": "repo-05"
+     },
+     "at_other": {
+      "file": "src/mod_66f302.ts",
+      "line": 64,
+      "repo": "repo-06"
+     },
+     "identifier": "SHARED_ENV_15",
+     "kind": "env"
+    },
+    {
+     "at": {
+      "file": "src/mod_587f78.ts",
+      "line": 113,
+      "repo": "repo-05"
+     },
+     "at_other": {
+      "file": "src/mod_a1dc8e.ts",
+      "line": 63,
+      "repo": "repo-06"
+     },
+     "identifier": "SHARED_ENV_20",
+     "kind": "env"
+    }
+   ]
+  },
+  {
+   "a": "repo-06",
+   "b": "repo-18",
+   "count": 2,
+   "identifiers": [
+    "SHARED_ENV_05",
+    "SHARED_ENV_13"
+   ],
+   "kinds": [
+    "env"
+   ],
+   "witnesses": [
+    {
+     "at": {
+      "file": "src/mod_1c680a.py",
+      "line": 76,
+      "repo": "repo-06"
+     },
+     "at_other": {
+      "file": "src/mod_1aecb2.py",
+      "line": 23,
+      "repo": "repo-18"
+     },
+     "identifier": "SHARED_ENV_05",
+     "kind": "env"
+    },
+    {
+     "at": {
+      "file": "src/mod_5f7d31.ts",
+      "line": 20,
+      "repo": "repo-06"
+     },
+     "at_other": {
+      "file": "src/mod_369b49.py",
+      "line": 175,
+      "repo": "repo-18"
+     },
+     "identifier": "SHARED_ENV_13",
+     "kind": "env"
+    }
+   ]
+  },
+  {
+   "a": "repo-07",
+   "b": "repo-16",
+   "count": 2,
+   "identifiers": [
+    "SHARED_ENV_01",
+    "SHARED_ENV_03"
+   ],
+   "kinds": [
+    "env"
+   ],
+   "witnesses": [
+    {
+     "at": {
+      "file": "src/mod_67e265.py",
+      "line": 24,
+      "repo": "repo-07"
+     },
+     "at_other": {
+      "file": "server.js",
+      "line": 158,
+      "repo": "repo-16"
+     },
+     "identifier": "SHARED_ENV_01",
+     "kind": "env"
+    },
+    {
+     "at": {
+      "file": "src/mod_67e265.py",
+      "line": 25,
+      "repo": "repo-07"
+     },
+     "at_other": {
+      "file": "src/mod_ea8e29.js",
+      "line": 11,
+      "repo": "repo-16"
+     },
+     "identifier": "SHARED_ENV_03",
+     "kind": "env"
+    }
+   ]
+  },
+  {
+   "a": "repo-11",
+   "b": "repo-13",
+   "count": 2,
+   "identifiers": [
+    "SHARED_ENV_02",
+    "SHARED_ENV_16"
+   ],
+   "kinds": [
+    "env"
+   ],
+   "witnesses": [
+    {
+     "at": {
+      "file": "src/mod_805c71.py",
+      "line": 58,
+      "repo": "repo-11"
+     },
+     "at_other": {
+      "file": "src/mod_6e9a10.py",
+      "line": 41,
+      "repo": "repo-13"
+     },
+     "identifier": "SHARED_ENV_02",
+     "kind": "env"
+    },
+    {
+     "at": {
+      "file": "src/mod_805c71.py",
+      "line": 424,
+      "repo": "repo-11"
+     },
+     "at_other": {
+      "file": "src/mod_f0cb83.py",
+      "line": 40,
+      "repo": "repo-13"
+     },
+     "identifier": "SHARED_ENV_16",
+     "kind": "env"
+    }
+   ]
+  },
+  {
+   "a": "repo-16",
+   "b": "repo-18",
+   "count": 2,
+   "identifiers": [
+    "SHARED_ENV_13",
+    "SHARED_ENV_14"
+   ],
+   "kinds": [
+    "env"
+   ],
+   "witnesses": [
+    {
+     "at": {
+      "file": "src/mod_406210.js",
+      "line": 5,
+      "repo": "repo-16"
+     },
+     "at_other": {
+      "file": "src/mod_369b49.py",
+      "line": 175,
+      "repo": "repo-18"
+     },
+     "identifier": "SHARED_ENV_13",
+     "kind": "env"
+    },
+    {
+     "at": {
+      "file": "src/mod_4e0e7f.js",
+      "line": 11,
+      "repo": "repo-16"
+     },
+     "at_other": {
+      "file": "src/mod_e765c5.js",
+      "line": 7,
+      "repo": "repo-18"
+     },
+     "identifier": "SHARED_ENV_14",
+     "kind": "env"
+    }
+   ]
+  },
+  {
+   "a": "repo-01",
+   "b": "repo-06",
+   "count": 1,
+   "identifiers": [
+    "SHARED_ENV_13"
+   ],
+   "kinds": [
+    "env"
+   ],
+   "witnesses": [
+    {
+     "at": {
+      "file": "src/mod_24adbd.ts",
+      "line": 30,
+      "repo": "repo-01"
+     },
+     "at_other": {
+      "file": "src/mod_5f7d31.ts",
+      "line": 20,
+      "repo": "repo-06"
+     },
+     "identifier": "SHARED_ENV_13",
+     "kind": "env"
+    }
+   ]
+  },
+  {
+   "a": "repo-01",
+   "b": "repo-09",
+   "count": 1,
+   "identifiers": [
+    "SHARED_ENV_13"
+   ],
+   "kinds": [
+    "env"
+   ],
+   "witnesses": [
+    {
+     "at": {
+      "file": "src/mod_24adbd.ts",
+      "line": 30,
+      "repo": "repo-01"
+     },
+     "at_other": {
+      "file": "src/mod_a9f766.py",
+      "line": 54,
+      "repo": "repo-09"
+     },
+     "identifier": "SHARED_ENV_13",
+     "kind": "env"
+    }
+   ]
+  },
+  {
+   "a": "repo-01",
+   "b": "repo-11",
+   "count": 1,
+   "identifiers": [
+    "SHARED_ENV_13"
+   ],
+   "kinds": [
+    "env"
+   ],
+   "witnesses": [
+    {
+     "at": {
+      "file": "src/mod_24adbd.ts",
+      "line": 30,
+      "repo": "repo-01"
+     },
+     "at_other": {
+      "file": "src/mod_805c71.py",
+      "line": 118,
+      "repo": "repo-11"
+     },
+     "identifier": "SHARED_ENV_13",
+     "kind": "env"
+    }
+   ]
+  },
+  {
+   "a": "repo-01",
+   "b": "repo-18",
+   "count": 1,
+   "identifiers": [
+    "SHARED_ENV_13"
+   ],
+   "kinds": [
+    "env"
+   ],
+   "witnesses": [
+    {
+     "at": {
+      "file": "src/mod_24adbd.ts",
+      "line": 30,
+      "repo": "repo-01"
+     },
+     "at_other": {
+      "file": "src/mod_369b49.py",
+      "line": 175,
+      "repo": "repo-18"
+     },
+     "identifier": "SHARED_ENV_13",
+     "kind": "env"
+    }
+   ]
+  },
+  {
+   "a": "repo-02",
+   "b": "repo-05",
+   "count": 1,
+   "identifiers": [
+    "SHARED_ENV_10"
+   ],
+   "kinds": [
+    "env"
+   ],
+   "witnesses": [
+    {
+     "at": {
+      "file": "vite.config.ts",
+      "line": 21,
+      "repo": "repo-02"
+     },
+     "at_other": {
+      "file": "vite.config.ts",
+      "line": 17,
+      "repo": "repo-05"
+     },
+     "identifier": "SHARED_ENV_10",
+     "kind": "env"
+    }
+   ]
+  },
+  {
+   "a": "repo-02",
+   "b": "repo-07",
+   "count": 1,
+   "identifiers": [
+    "SHARED_ENV_16"
+   ],
+   "kinds": [
+    "env"
+   ],
+   "witnesses": [
+    {
+     "at": {
+      "file": ".aider.conf.yml",
+      "line": 12,
+      "repo": "repo-02"
+     },
+     "at_other": {
+      "file": ".aider.conf.yml",
+      "line": 12,
+      "repo": "repo-07"
+     },
+     "identifier": "SHARED_ENV_16",
+     "kind": "env"
+    }
+   ]
+  },
+  {
+   "a": "repo-02",
+   "b": "repo-11",
+   "count": 1,
+   "identifiers": [
+    "SHARED_ENV_16"
+   ],
+   "kinds": [
+    "env"
+   ],
+   "witnesses": [
+    {
+     "at": {
+      "file": ".aider.conf.yml",
+      "line": 12,
+      "repo": "repo-02"
+     },
+     "at_other": {
+      "file": "src/mod_805c71.py",
+      "line": 424,
+      "repo": "repo-11"
+     },
+     "identifier": "SHARED_ENV_16",
+     "kind": "env"
+    }
+   ]
+  },
+  {
+   "a": "repo-02",
+   "b": "repo-13",
+   "count": 1,
+   "identifiers": [
+    "SHARED_ENV_16"
+   ],
+   "kinds": [
+    "env"
+   ],
+   "witnesses": [
+    {
+     "at": {
+      "file": ".aider.conf.yml",
+      "line": 12,
+      "repo": "repo-02"
+     },
+     "at_other": {
+      "file": "src/mod_f0cb83.py",
+      "line": 40,
+      "repo": "repo-13"
+     },
+     "identifier": "SHARED_ENV_16",
+     "kind": "env"
+    }
+   ]
+  },
+  {
+   "a": "repo-03",
+   "b": "repo-12",
+   "count": 1,
+   "identifiers": [
+    "SHARED_ENV_12"
+   ],
+   "kinds": [
+    "env"
+   ],
+   "witnesses": [
+    {
+     "at": {
+      "file": "src/mod_509367.mjs",
+      "line": 6,
+      "repo": "repo-03"
+     },
+     "at_other": {
+      "file": "src/mod_c95021.yml",
+      "line": 155,
+      "repo": "repo-12"
+     },
+     "identifier": "SHARED_ENV_12",
+     "kind": "env"
+    }
+   ]
+  },
+  {
+   "a": "repo-06",
+   "b": "repo-09",
+   "count": 1,
+   "identifiers": [
+    "SHARED_ENV_13"
+   ],
+   "kinds": [
+    "env"
+   ],
+   "witnesses": [
+    {
+     "at": {
+      "file": "src/mod_5f7d31.ts",
+      "line": 20,
+      "repo": "repo-06"
+     },
+     "at_other": {
+      "file": "src/mod_a9f766.py",
+      "line": 54,
+      "repo": "repo-09"
+     },
+     "identifier": "SHARED_ENV_13",
+     "kind": "env"
+    }
+   ]
+  },
+  {
+   "a": "repo-06",
+   "b": "repo-10",
+   "count": 1,
+   "identifiers": [
+    "SHARED_ENV_03"
+   ],
+   "kinds": [
+    "env"
+   ],
+   "witnesses": [
+    {
+     "at": {
+      "file": "src/mod_8525d7.py",
+      "line": 8,
+      "repo": "repo-06"
+     },
+     "at_other": {
+      "file": "drizzle.config.ts",
+      "line": 8,
+      "repo": "repo-10"
+     },
+     "identifier": "SHARED_ENV_03",
+     "kind": "env"
+    }
+   ]
+  },
+  {
+   "a": "repo-06",
+   "b": "repo-11",
+   "count": 1,
+   "identifiers": [
+    "SHARED_ENV_13"
+   ],
+   "kinds": [
+    "env"
+   ],
+   "witnesses": [
+    {
+     "at": {
+      "file": "src/mod_5f7d31.ts",
+      "line": 20,
+      "repo": "repo-06"
+     },
+     "at_other": {
+      "file": "src/mod_805c71.py",
+      "line": 118,
+      "repo": "repo-11"
+     },
+     "identifier": "SHARED_ENV_13",
+     "kind": "env"
+    }
+   ]
+  },
+  {
+   "a": "repo-07",
+   "b": "repo-10",
+   "count": 1,
+   "identifiers": [
+    "SHARED_ENV_03"
+   ],
+   "kinds": [
+    "env"
+   ],
+   "witnesses": [
+    {
+     "at": {
+      "file": "src/mod_67e265.py",
+      "line": 25,
+      "repo": "repo-07"
+     },
+     "at_other": {
+      "file": "drizzle.config.ts",
+      "line": 8,
+      "repo": "repo-10"
+     },
+     "identifier": "SHARED_ENV_03",
+     "kind": "env"
+    }
+   ]
+  },
+  {
+   "a": "repo-07",
+   "b": "repo-11",
+   "count": 1,
+   "identifiers": [
+    "SHARED_ENV_16"
+   ],
+   "kinds": [
+    "env"
+   ],
+   "witnesses": [
+    {
+     "at": {
+      "file": ".aider.conf.yml",
+      "line": 12,
+      "repo": "repo-07"
+     },
+     "at_other": {
+      "file": "src/mod_805c71.py",
+      "line": 424,
+      "repo": "repo-11"
+     },
+     "identifier": "SHARED_ENV_16",
+     "kind": "env"
+    }
+   ]
+  },
+  {
+   "a": "repo-07",
+   "b": "repo-13",
+   "count": 1,
+   "identifiers": [
+    "SHARED_ENV_16"
+   ],
+   "kinds": [
+    "env"
+   ],
+   "witnesses": [
+    {
+     "at": {
+      "file": ".aider.conf.yml",
+      "line": 12,
+      "repo": "repo-07"
+     },
+     "at_other": {
+      "file": "src/mod_f0cb83.py",
+      "line": 40,
+      "repo": "repo-13"
+     },
+     "identifier": "SHARED_ENV_16",
+     "kind": "env"
+    }
+   ]
+  },
+  {
+   "a": "repo-07",
+   "b": "repo-18",
+   "count": 1,
+   "identifiers": [
+    "SHARED_ENV_05"
+   ],
+   "kinds": [
+    "env"
+   ],
+   "witnesses": [
+    {
+     "at": {
+      "file": "src/mod_37df70.py",
+      "line": 67,
+      "repo": "repo-07"
+     },
+     "at_other": {
+      "file": "src/mod_1aecb2.py",
+      "line": 23,
+      "repo": "repo-18"
+     },
+     "identifier": "SHARED_ENV_05",
+     "kind": "env"
+    }
+   ]
+  },
+  {
+   "a": "repo-09",
+   "b": "repo-11",
+   "count": 1,
+   "identifiers": [
+    "SHARED_ENV_13"
+   ],
+   "kinds": [
+    "env"
+   ],
+   "witnesses": [
+    {
+     "at": {
+      "file": "src/mod_a9f766.py",
+      "line": 54,
+      "repo": "repo-09"
+     },
+     "at_other": {
+      "file": "src/mod_805c71.py",
+      "line": 118,
+      "repo": "repo-11"
+     },
+     "identifier": "SHARED_ENV_13",
+     "kind": "env"
+    }
+   ]
+  },
+  {
+   "a": "repo-09",
+   "b": "repo-16",
+   "count": 1,
+   "identifiers": [
+    "SHARED_ENV_13"
+   ],
+   "kinds": [
+    "env"
+   ],
+   "witnesses": [
+    {
+     "at": {
+      "file": "src/mod_a9f766.py",
+      "line": 54,
+      "repo": "repo-09"
+     },
+     "at_other": {
+      "file": "src/mod_406210.js",
+      "line": 5,
+      "repo": "repo-16"
+     },
+     "identifier": "SHARED_ENV_13",
+     "kind": "env"
+    }
+   ]
+  },
+  {
+   "a": "repo-09",
+   "b": "repo-18",
+   "count": 1,
+   "identifiers": [
+    "SHARED_ENV_13"
+   ],
+   "kinds": [
+    "env"
+   ],
+   "witnesses": [
+    {
+     "at": {
+      "file": "src/mod_a9f766.py",
+      "line": 54,
+      "repo": "repo-09"
+     },
+     "at_other": {
+      "file": "src/mod_369b49.py",
+      "line": 175,
+      "repo": "repo-18"
+     },
+     "identifier": "SHARED_ENV_13",
+     "kind": "env"
+    }
+   ]
+  },
+  {
+   "a": "repo-10",
+   "b": "repo-16",
+   "count": 1,
+   "identifiers": [
+    "SHARED_ENV_03"
+   ],
+   "kinds": [
+    "env"
+   ],
+   "witnesses": [
+    {
+     "at": {
+      "file": "drizzle.config.ts",
+      "line": 8,
+      "repo": "repo-10"
+     },
+     "at_other": {
+      "file": "src/mod_ea8e29.js",
+      "line": 11,
+      "repo": "repo-16"
+     },
+     "identifier": "SHARED_ENV_03",
+     "kind": "env"
+    }
+   ]
+  },
+  {
+   "a": "repo-11",
+   "b": "repo-16",
+   "count": 1,
+   "identifiers": [
+    "SHARED_ENV_13"
+   ],
+   "kinds": [
+    "env"
+   ],
+   "witnesses": [
+    {
+     "at": {
+      "file": "src/mod_805c71.py",
+      "line": 118,
+      "repo": "repo-11"
+     },
+     "at_other": {
+      "file": "src/mod_406210.js",
+      "line": 5,
+      "repo": "repo-16"
+     },
+     "identifier": "SHARED_ENV_13",
+     "kind": "env"
+    }
+   ]
+  },
+  {
+   "a": "repo-11",
+   "b": "repo-18",
+   "count": 1,
+   "identifiers": [
+    "SHARED_ENV_13"
+   ],
+   "kinds": [
+    "env"
+   ],
+   "witnesses": [
+    {
+     "at": {
+      "file": "src/mod_805c71.py",
+      "line": 118,
+      "repo": "repo-11"
+     },
+     "at_other": {
+      "file": "src/mod_369b49.py",
+      "line": 175,
+      "repo": "repo-18"
+     },
+     "identifier": "SHARED_ENV_13",
+     "kind": "env"
+    }
+   ]
+  },
+  {
+   "a": "repo-16",
+   "b": "repo-19",
+   "count": 1,
+   "identifiers": [
+    "SHARED_ENV_14"
+   ],
+   "kinds": [
+    "env"
+   ],
+   "witnesses": [
+    {
+     "at": {
+      "file": "src/mod_4e0e7f.js",
+      "line": 11,
+      "repo": "repo-16"
+     },
+     "at_other": {
+      "file": "src/mod_e765c5.js",
+      "line": 7,
+      "repo": "repo-19"
+     },
+     "identifier": "SHARED_ENV_14",
+     "kind": "env"
+    }
+   ]
+  }
+ ],
+ "measured": {
+  "certificate_denied": 7,
+  "certificates": 4,
+  "emergent_claims": 34,
+  "fork_pairs": 6,
+  "import_sites": 13,
+  "invisible_coupling_pairs": 32,
+  "repos_total": 20,
+  "repos_with_dependents": 6,
+  "repos_with_seams": 9,
+  "risk_counts": {
+   "critical": 9,
+   "high": 8,
+   "low": 14,
+   "medium": 8
+  },
+  "seam_count": 7,
+  "similar_pairs": 49,
+  "symbols_crossing": 2,
+  "symbols_resolved": 2
+ },
+ "orphans": [
+  "repo-02",
+  "repo-03",
+  "repo-07",
+  "repo-08",
+  "repo-09",
+  "repo-10",
+  "repo-12",
+  "repo-14",
+  "repo-15",
+  "repo-17",
+  "repo-18"
+ ],
+ "posture": {
+  "repo-01": {
+   "code_in": 1,
+   "code_out": 0,
+   "declared_in": 0,
+   "declared_out": 0,
+   "regime": "library"
+  },
+  "repo-02": {
+   "code_in": 0,
+   "code_out": 0,
+   "declared_in": 0,
+   "declared_out": 0,
+   "regime": "isolated"
+  },
+  "repo-03": {
+   "code_in": 0,
+   "code_out": 0,
+   "declared_in": 0,
+   "declared_out": 0,
+   "regime": "isolated"
+  },
+  "repo-04": {
+   "code_in": 2,
+   "code_out": 0,
+   "declared_in": 0,
+   "declared_out": 0,
+   "regime": "library"
+  },
+  "repo-05": {
+   "code_in": 1,
+   "code_out": 2,
+   "declared_in": 0,
+   "declared_out": 0,
+   "regime": "clandestine"
+  },
+  "repo-06": {
+   "code_in": 0,
+   "code_out": 1,
+   "declared_in": 0,
+   "declared_out": 0,
+   "regime": "clandestine"
+  },
+  "repo-07": {
+   "code_in": 0,
+   "code_out": 0,
+   "declared_in": 0,
+   "declared_out": 0,
+   "regime": "isolated"
+  },
+  "repo-08": {
+   "code_in": 0,
+   "code_out": 0,
+   "declared_in": 0,
+   "declared_out": 0,
+   "regime": "isolated"
+  },
+  "repo-09": {
+   "code_in": 0,
+   "code_out": 0,
+   "declared_in": 0,
+   "declared_out": 0,
+   "regime": "isolated"
+  },
+  "repo-10": {
+   "code_in": 0,
+   "code_out": 0,
+   "declared_in": 0,
+   "declared_out": 0,
+   "regime": "isolated"
+  },
+  "repo-11": {
+   "code_in": 0,
+   "code_out": 3,
+   "declared_in": 0,
+   "declared_out": 1,
+   "regime": "clandestine"
+  },
+  "repo-12": {
+   "code_in": 0,
+   "code_out": 0,
+   "declared_in": 0,
+   "declared_out": 0,
+   "regime": "isolated"
+  },
+  "repo-13": {
+   "code_in": 1,
+   "code_out": 0,
+   "declared_in": 0,
+   "declared_out": 0,
+   "regime": "library"
+  },
+  "repo-14": {
+   "code_in": 0,
+   "code_out": 0,
+   "declared_in": 0,
+   "declared_out": 0,
+   "regime": "isolated"
+  },
+  "repo-15": {
+   "code_in": 0,
+   "code_out": 0,
+   "declared_in": 0,
+   "declared_out": 0,
+   "regime": "isolated"
+  },
+  "repo-16": {
+   "code_in": 0,
+   "code_out": 1,
+   "declared_in": 0,
+   "declared_out": 0,
+   "regime": "clandestine"
+  },
+  "repo-17": {
+   "code_in": 0,
+   "code_out": 0,
+   "declared_in": 0,
+   "declared_out": 0,
+   "regime": "isolated"
+  },
+  "repo-18": {
+   "code_in": 0,
+   "code_out": 0,
+   "declared_in": 0,
+   "declared_out": 0,
+   "regime": "isolated"
+  },
+  "repo-19": {
+   "code_in": 1,
+   "code_out": 0,
+   "declared_in": 0,
+   "declared_out": 0,
+   "regime": "library"
+  },
+  "repo-20": {
+   "code_in": 1,
+   "code_out": 0,
+   "declared_in": 1,
+   "declared_out": 0,
+   "regime": "library"
+  }
+ },
+ "repos": {
+  "repo-01": {
+   "declared_dependencies": [
+    "@example/genai",
+    "@example/sdk",
+    "@example/post-quantum",
+    "@example/foundry",
+    "@example/vite",
+    "@example/express",
+    "@example/node",
+    "@example/plugin-react",
+    "autoprefixer",
+    "dotenv",
+    "esbuild",
+    "ethers",
+    "express",
+    "fast-check",
+    "jspdf",
+    "lucide-react",
+    "motion",
+    "react",
+    "react-dom",
+    "tailwindcss",
+    "tsx",
+    "typescript",
+    "vite",
+    "vitest"
+   ],
+   "external_package_count": 11,
+   "files": 70,
+   "languages": {
+    "typescript": 50
+   },
+   "loc": 4800,
+   "name": "repo-01",
+   "package_name": "package-01",
+   "submodules": []
+  },
+  "repo-02": {
+   "declared_dependencies": [
+    "@example/genai",
+    "@example/foundry",
+    "@example/vite",
+    "@example/d3",
+    "@example/express",
+    "@example/jsonwebtoken",
+    "@example/node",
+    "@example/plugin-react",
+    "autoprefixer",
+    "d3",
+    "dotenv",
+    "esbuild",
+    "express",
+    "jsonwebtoken",
+    "lucide-react",
+    "motion",
+    "react",
+    "react-dom",
+    "tailwindcss",
+    "tsx",
+    "typescript",
+    "vite",
+    "vitest"
+   ],
+   "external_package_count": 15,
+   "files": 125,
+   "languages": {
+    "typescript": 97
+   },
+   "loc": 12131,
+   "name": "repo-02",
+   "package_name": "package-02",
+   "submodules": []
+  },
+  "repo-03": {
+   "declared_dependencies": [
+    "@example/cors",
+    "@example/express",
+    "@example/node",
+    "@example/node-fetch",
+    "cors",
+    "dotenv",
+    "express",
+    "express-rate-limit",
+    "helmet",
+    "kotlinx-coroutines-test",
+    "node-fetch",
+    "sentry-android",
+    "ts-node-dev",
+    "typescript"
+   ],
+   "external_package_count": 325,
+   "files": 316,
+   "languages": {
+    "cpp": 2,
+    "h": 1,
+    "javascript": 54,
+    "kotlin": 172,
+    "python": 1,
+    "typescript": 6
+   },
+   "loc": 24645,
+   "name": "repo-03",
+   "package_name": "package-03",
+   "submodules": []
+  },
+  "repo-04": {
+   "declared_dependencies": [
+    "@example/node",
+    "tsx",
+    "typescript",
+    "vitest"
+   ],
+   "external_package_count": 1,
+   "files": 62,
+   "languages": {
+    "javascript": 2,
+    "typescript": 36
+   },
+   "loc": 2749,
+   "name": "repo-04",
+   "package_name": "package-04",
+   "submodules": []
+  },
+  "repo-05": {
+   "declared_dependencies": [
+    "@example/genai",
+    "@example/sdk",
+    "@example/post-quantum",
+    "@example/vite",
+    "@example/body-parser",
+    "@example/express",
+    "@example/http-errors",
+    "@example/node",
+    "@example/qs",
+    "@example/range-parser",
+    "@example/react",
+    "@example/react-dom",
+    "@example/send",
+    "@example/plugin-react",
+    "autoprefixer",
+    "dotenv",
+    "esbuild",
+    "ethers",
+    "express",
+    "fast-check",
+    "jspdf",
+    "lucide-react",
+    "motion",
+    "react",
+    "react-dom",
+    "tailwindcss",
+    "tsx",
+    "typescript",
+    "vite",
+    "vitest"
+   ],
+   "external_package_count": 17,
+   "files": 385,
+   "languages": {
+    "javascript": 17,
+    "python": 7,
+    "rust": 1,
+    "typescript": 162
+   },
+   "loc": 30205,
+   "name": "repo-05",
+   "package_name": "package-01",
+   "submodules": []
+  },
+  "repo-06": {
+   "declared_dependencies": [
+    "@example/bigquery",
+    "@example/run",
+    "@example/storage",
+    "@example/renderer",
+    "@example/connectors-sdk",
+    "@example/react-query",
+    "@example/node",
+    "esbuild",
+    "fastapi==0.115.0",
+    "google-auth-library",
+    "numpy==1.26.4",
+    "numpy>=1.26,<2.0",
+    "numpy>=1.26,<3",
+    "orval",
+    "prettier",
+    "psycopg2-binary==2.9.9",
+    "psycopg2-binary>=2.9,<3.0",
+    "pydantic==2.9.0",
+    "react",
+    "react-dom",
+    "requests>=2.31,<3.0",
+    "scipy>=1.12,<2.0",
+    "tsx",
+    "typescript",
+    "uvicorn[standard]==0.30.0",
+    "zod"
+   ],
+   "external_package_count": 104,
+   "files": 1004,
+   "languages": {
+    "javascript": 17,
+    "python": 182,
+    "typescript": 417
+   },
+   "loc": 102308,
+   "name": "repo-06",
+   "package_name": "package-05",
+   "submodules": []
+  },
+  "repo-07": {
+   "declared_dependencies": [
+    "fastapi==0.115.0",
+    "fastapi>=0.110,<1.0",
+    "httpx>=0.27,<0.29",
+    "numpy==1.26.4",
+    "numpy>=1.26",
+    "numpy>=1.26,<2.0",
+    "psycopg2-binary==2.9.9",
+    "psycopg2-binary>=2.9,<3.0",
+    "pydantic==2.9.0",
+    "pytest>=8.0",
+    "requests>=2.31,<3.0",
+    "scipy>=1.12,<2.0",
+    "uvicorn[standard]==0.30.0"
+   ],
+   "external_package_count": 13,
+   "files": 294,
+   "languages": {
+    "javascript": 1,
+    "python": 151
+   },
+   "loc": 31755,
+   "name": "repo-07",
+   "package_name": null,
+   "submodules": []
+  },
+  "repo-08": {
+   "declared_dependencies": [],
+   "external_package_count": 1,
+   "files": 12,
+   "languages": {
+    "javascript": 6
+   },
+   "loc": 587,
+   "name": "repo-08",
+   "package_name": "repo-08",
+   "submodules": []
+  },
+  "repo-09": {
+   "declared_dependencies": [
+    "typescript"
+   ],
+   "external_package_count": 2,
+   "files": 24,
+   "languages": {
+    "javascript": 1,
+    "python": 10,
+    "typescript": 3
+   },
+   "loc": 2430,
+   "name": "repo-09",
+   "package_name": "repo-09-promotion-gate",
+   "submodules": []
+  },
+  "repo-10": {
+   "declared_dependencies": [
+    "@example/resolvers",
+    "@example/trace-mapping",
+    "@example/react-accordion",
+    "@example/react-alert-dialog",
+    "@example/react-aspect-ratio",
+    "@example/react-avatar",
+    "@example/react-checkbox",
+    "@example/react-collapsible",
+    "@example/react-context-menu",
+    "@example/react-dialog",
+    "@example/react-dropdown-menu",
+    "@example/react-hover-card",
+    "@example/react-label",
+    "@example/react-menubar",
+    "@example/react-navigation-menu",
+    "@example/react-popover",
+    "@example/react-progress",
+    "@example/react-radio-group",
+    "@example/react-scroll-area",
+    "@example/react-select",
+    "@example/react-separator",
+    "@example/react-slider",
+    "@example/react-slot",
+    "@example/react-switch",
+    "@example/react-tabs",
+    "@example/react-toast",
+    "@example/react-toggle",
+    "@example/react-toggle-group",
+    "@example/react-tooltip",
+    "@example/supabase-js",
+    "@example/typography",
+    "@example/vite",
+    "@example/react-query",
+    "@example/express",
+    "@example/express-session",
+    "@example/morgan",
+    "@example/node",
+    "@example/passport",
+    "@example/passport-local",
+    "@example/pg",
+    "@example/react",
+    "@example/react-dom",
+    "@example/uuid",
+    "@example/ws",
+    "@example/plugin-react",
+    "autoprefixer",
+    "class-variance-authority",
+    "clsx",
+    "cmdk",
+    "date-fns",
+    "dockview",
+    "dotenv",
+    "drizzle-kit",
+    "drizzle-orm",
+    "drizzle-zod",
+    "embla-carousel-react",
+    "esbuild",
+    "express",
+    "express-rate-limit",
+    "express-session",
+    "framer-motion",
+    "helmet",
+    "input-otp",
+    "lucide-react",
+    "memorystore",
+    "morgan",
+    "next-themes",
+    "openai",
+    "passport",
+    "passport-local",
+    "pg",
+    "postcss",
+    "react",
+    "react-day-picker",
+    "react-dom",
+    "react-hook-form",
+    "react-icons",
+    "react-resizable-panels",
+    "recharts",
+    "tailwind-merge",
+    "tailwindcss",
+    "tailwindcss-animate",
+    "tsx",
+    "tw-animate-css",
+    "typescript",
+    "uuid",
+    "vaul",
+    "vite",
+    "wouter",
+    "ws",
+    "zod",
+    "zod-validation-error"
+   ],
+   "external_package_count": 61,
+   "files": 141,
+   "languages": {
+    "javascript": 3,
+    "typescript": 110
+   },
+   "loc": 11371,
+   "name": "repo-10",
+   "package_name": "package-07",
+   "submodules": []
+  },
+  "repo-11": {
+   "declared_dependencies": [
+    "httpx>=0.27",
+    "pytest>=7",
+    "package-14"
+   ],
+   "external_package_count": 6,
+   "files": 48,
+   "languages": {
+    "python": 38
+   },
+   "loc": 4213,
+   "name": "repo-11",
+   "package_name": "repo-11",
+   "submodules": []
+  },
+  "repo-12": {
+   "declared_dependencies": [
+    "@example/functions",
+    "@example/sdk",
+    "@example/provider",
+    "@example/server",
+    "electron",
+    "electron-builder",
+    "fast-check",
+    "grapesjs",
+    "openapi-typescript",
+    "playwright-core",
+    "y-protocols",
+    "yjs"
+   ],
+   "external_package_count": 12,
+   "files": 784,
+   "languages": {
+    "javascript": 588
+   },
+   "loc": 61518,
+   "name": "repo-12",
+   "package_name": "package-08",
+   "submodules": []
+  },
+  "repo-13": {
+   "declared_dependencies": [
+    "numpy>=1.24",
+    "pytest>=8",
+    "scikit-learn>=1.3",
+    "wasmtime"
+   ],
+   "external_package_count": 6,
+   "files": 33,
+   "languages": {
+    "python": 21
+   },
+   "loc": 2906,
+   "name": "repo-13",
+   "package_name": "repo-13",
+   "submodules": []
+  },
+  "repo-14": {
+   "declared_dependencies": [
+    "@example/react",
+    "@example/react-dom",
+    "@example/eslint-plugin",
+    "@example/parser",
+    "@example/plugin-react",
+    "eslint",
+    "eslint-plugin-react-hooks",
+    "eslint-plugin-react-refresh",
+    "react",
+    "react-dom",
+    "typescript",
+    "vite"
+   ],
+   "external_package_count": 4,
+   "files": 21,
+   "languages": {
+    "typescript": 10
+   },
+   "loc": 1204,
+   "name": "repo-14",
+   "package_name": "repo-14",
+   "submodules": []
+  },
+  "repo-15": {
+   "declared_dependencies": [
+    "@example/node",
+    "tsx",
+    "typescript"
+   ],
+   "external_package_count": 1,
+   "files": 38,
+   "languages": {
+    "typescript": 17
+   },
+   "loc": 620,
+   "name": "repo-15",
+   "package_name": "@example/repo-15",
+   "submodules": []
+  },
+  "repo-16": {
+   "declared_dependencies": [
+    "express",
+    "ws"
+   ],
+   "external_package_count": 6,
+   "files": 75,
+   "languages": {
+    "javascript": 47,
+    "python": 2,
+    "typescript": 2
+   },
+   "loc": 5978,
+   "name": "repo-16",
+   "package_name": "package-10",
+   "submodules": []
+  },
+  "repo-17": {
+   "declared_dependencies": [],
+   "external_package_count": 1,
+   "files": 33,
+   "languages": {
+    "javascript": 18
+   },
+   "loc": 296,
+   "name": "repo-17",
+   "package_name": "@example/repo-17",
+   "submodules": []
+  },
+  "repo-18": {
+   "declared_dependencies": [
+    "@example/plugin-proposal-private-property-in-object",
+    "@example/craco",
+    "@example/visual-edits",
+    "@example/js",
+    "@example/resolvers",
+    "@example/react-accordion",
+    "@example/react-alert-dialog",
+    "@example/react-aspect-ratio",
+    "@example/react-avatar",
+    "@example/react-checkbox",
+    "@example/react-collapsible",
+    "@example/react-context-menu",
+    "@example/react-dialog",
+    "@example/react-dropdown-menu",
+    "@example/react-hover-card",
+    "@example/react-label",
+    "@example/react-menubar",
+    "@example/react-navigation-menu",
+    "@example/react-popover",
+    "@example/react-progress",
+    "@example/react-radio-group",
+    "@example/react-scroll-area",
+    "@example/react-select",
+    "@example/react-separator",
+    "@example/react-slider",
+    "@example/react-slot",
+    "@example/react-switch",
+    "@example/react-tabs",
+    "@example/react-toast",
+    "@example/react-toggle",
+    "@example/react-toggle-group",
+    "@example/react-tooltip",
+    "package-15",
+    "package-16",
+    "package-17",
+    "package-18",
+    "@example/react-query",
+    "@example/jsdom",
+    "@example/lodash",
+    "@example/node",
+    "Jinja2==3.1.6",
+    "MarkupSafe==3.0.3",
+    "PyJWT==2.13.0",
+    "PyYAML==6.0.3",
+    "Pygments==2.21.0",
+    "aiohappyeyeballs==2.7.1",
+    "aiohttp==3.14.3",
+    "aiosignal==1.4.0",
+    "annotated-doc==0.0.5",
+    "annotated-types==0.8.0",
+    "anyio==4.14.2",
+    "apify",
+    "ast_serialize==0.8.0",
+    "attrs==26.1.0",
+    "autoprefixer",
+    "axe-core",
+    "axios",
+    "bcrypt==4.1.3",
+    "black==26.5.1",
+    "boto3==1.43.85",
+    "botocore==1.43.85",
+    "certifi==2026.7.22",
+    "cffi==2.1.1",
+    "charset-normalizer==3.5.1",
+    "class-variance-authority",
+    "click==8.5.0",
+    "clsx",
+    "cmdk",
+    "cra-template",
+    "cryptography==50.0.1",
+    "date-fns",
+    "dayjs",
+    "distro==1.9.0",
+    "dnspython==2.8.0",
+    "dotenv",
+    "email-validator==2.3.0",
+    "embla-carousel-react",
+    "emergentintegrations==0.2.0",
+    "eslint",
+    "eslint-plugin-import",
+    "eslint-plugin-jsx-a11y",
+    "eslint-plugin-react",
+    "eslint-plugin-react-hooks",
+    "execnet==2.1.2",
+    "fast-xml-parser",
+    "fastapi==0.141.1",
+    "fastuuid==0.14.0",
+    "filelock==3.32.5",
+    "flake8==7.3.0",
+    "framer-motion",
+    "frozenlist==1.8.0",
+    "fsspec==2026.7.0",
+    "globals",
+    "google-ai-generativelanguage==0.6.15",
+    "google-api-core==2.33.0",
+    "google-api-python-client==2.200.0",
+    "google-auth-httplib2==0.4.2",
+    "google-auth==2.57.0",
+    "google-genai==2.22.0",
+    "google-generativeai==0.8.6",
+    "googleapis-common-protos==1.75.0",
+    "grpcio-status==1.71.2",
+    "grpcio==1.83.1",
+    "h11==0.16.0",
+    "hf-xet==1.6.0",
+    "httpcore==1.0.9",
+    "httplib2==0.32.0",
+    "httpx==0.28.1",
+    "huggingface_hub==1.30.0",
+    "idna==3.19",
+    "importlib_metadata==9.0.1",
+    "iniconfig==2.3.0",
+    "input-otp",
+    "isort==9.0.1",
+    "jiter==0.16.0",
+    "jmespath==1.1.0",
+    "jq==1.12.0",
+    "jsdom",
+    "jsonschema-specifications==2025.9.1",
+    "jsonschema==4.26.0",
+    "librt==0.15.0",
+    "litellm @ https://example.com/redacted",
+    "lodash",
+    "lucide-react",
+    "markdown-it-py==4.2.0",
+    "mccabe==0.7.0",
+    "mdurl==0.1.2",
+    "motor==3.3.1",
+    "multidict==6.7.1",
+    "mypy==2.3.1",
+    "mypy_extensions==1.1.0",
+    "next-themes",
+    "numpy==2.4.6",
+    "oauthlib==3.3.1",
+    "openai==1.99.9",
+    "packaging==26.3",
+    "pandas==3.0.5",
+    "passlib==1.7.4",
+    "pathspec==1.1.1",
+    "pdf-lib",
+    "pdfkit",
+    "pillow==12.3.0",
+    "platformdirs==4.11.6",
+    "playwright",
+    "pluggy==1.6.0",
+    "postcss",
+    "propcache==0.5.2",
+    "proto-plus==1.28.2",
+    "protobuf==5.29.6",
+    "pyasn1==0.6.4",
+    "pyasn1_modules==0.4.2",
+    "pycodestyle==2.14.0",
+    "pycparser==3.0",
+    "pydantic==2.13.5",
+    "pydantic_core==2.46.5",
+    "pyflakes==3.4.0",
+    "pymongo==4.6.3",
+    "pyparsing==3.3.2",
+    "pytest-asyncio==1.4.0",
+    "pytest-xdist==3.8.0",
+    "pytest==9.1.1",
+    "python-dateutil==2.9.0.post0",
+    "python-dotenv==1.2.3",
+    "python-multipart==0.0.32",
+    "pytokens==0.4.1",
+    "qrcode",
+    "react",
+    "react-day-picker",
+    "react-dom",
+    "react-hook-form",
+    "react-resizable-panels",
+    "react-router-dom",
+    "react-scripts",
+    "recharts",
+    "referencing==0.37.0",
+    "regex==2026.9.3",
+    "requests-oauthlib==2.0.0",
+    "requests==2.34.2",
+    "rich==15.0.0",
+    "rpds-py==2026.6.3",
+    "rsa==4.9.1",
+    "s3transfer==0.19.2",
+    "s5cmd==0.2.0",
+    "shellingham==1.5.4",
+    "six==1.17.0",
+    "sniffio==1.3.1",
+    "sonner",
+    "starlette==1.3.1",
+    "stripe==14.4.1",
+    "swr",
+    "tailwind-merge",
+    "tailwindcss",
+    "tailwindcss-animate",
+    "tenacity==9.1.4",
+    "tiktoken==0.14.0",
+    "tokenizers==0.23.2",
+    "tqdm==4.70.0",
+    "typer==0.27.2",
+    "typescript",
+    "typing-inspection==0.4.4",
+    "typing_extensions==4.16.0",
+    "tzdata==2026.3",
+    "uritemplate==4.2.0",
+    "urllib3==2.7.0",
+    "uvicorn==0.25.0",
+    "vaul",
+    "watchfiles==1.2.0",
+    "websockets==16.1.1",
+    "yarl==1.24.5",
+    "zipp==4.1.0",
+    "zod"
+   ],
+   "external_package_count": 65,
+   "files": 1136,
+   "languages": {
+    "javascript": 190,
+    "python": 14,
+    "typescript": 180
+   },
+   "loc": 52505,
+   "name": "repo-18",
+   "package_name": "package-12",
+   "submodules": []
+  },
+  "repo-19": {
+   "declared_dependencies": [
+    "apify",
+    "pdfkit",
+    "playwright",
+    "qrcode"
+   ],
+   "external_package_count": 5,
+   "files": 522,
+   "languages": {
+    "javascript": 91
+   },
+   "loc": 4591,
+   "name": "repo-19",
+   "package_name": "package-13",
+   "submodules": []
+  },
+  "repo-20": {
+   "declared_dependencies": [],
+   "external_package_count": 4,
+   "files": 22,
+   "languages": {
+    "python": 16
+   },
+   "loc": 1671,
+   "name": "repo-20",
+   "package_name": "repo-20",
+   "submodules": []
+  }
+ },
+ "risk": {
+  "counts": {
+   "critical": 9,
+   "high": 8,
+   "low": 14,
+   "medium": 8
+  },
+  "exposure": {
+   "local": 2,
+   "repo-01": 10,
+   "repo-02": 13,
+   "repo-03": 3,
+   "repo-05": 32,
+   "repo-06": 75,
+   "repo-07": 40,
+   "repo-08": 1,
+   "repo-09": 11,
+   "repo-10": 9,
+   "repo-11": 33,
+   "repo-12": 3,
+   "repo-13": 10,
+   "repo-14": 1,
+   "repo-15": 1,
+   "repo-16": 48,
+   "repo-17": 1,
+   "repo-18": 38,
+   "repo-19": 25
+  },
+  "register": [
+   {
+    "consequence": "rotating or revoking it breaks every listed repo silently; archiving any of them strands a live credential in it",
+    "kind": "SHARED_CREDENTIAL",
+    "repos": [
+     "repo-01",
+     "repo-06",
+     "repo-09",
+     "repo-11",
+     "repo-16",
+     "repo-18"
+    ],
+    "severity": "critical",
+    "summary": "SHARED_ENV_13 is read by 6 repositories (repo-01, repo-06, repo-09, repo-11, repo-16\u2026) \u2014 none of them declare a relationship admitting it",
+    "witnesses": [
+     {
+      "at": {
+       "file": "src/mod_5f7d31.ts",
+       "line": 20,
+       "repo": "repo-06"
+      },
+      "at_other": {
+       "file": "src/mod_406210.js",
+       "line": 5,
+       "repo": "repo-16"
+      },
+      "identifier": "SHARED_ENV_13",
+      "kind": "env"
+     },
+     {
+      "at": {
+       "file": "src/mod_24adbd.ts",
+       "line": 30,
+       "repo": "repo-01"
+      },
+      "at_other": {
+       "file": "src/mod_406210.js",
+       "line": 5,
+       "repo": "repo-16"
+      },
+      "identifier": "SHARED_ENV_13",
+      "kind": "env"
+     },
+     {
+      "at": {
+       "file": "src/mod_5f7d31.ts",
+       "line": 20,
+       "repo": "repo-06"
+      },
+      "at_other": {
+       "file": "src/mod_369b49.py",
+       "line": 175,
+       "repo": "repo-18"
+      },
+      "identifier": "SHARED_ENV_13",
+      "kind": "env"
+     },
+     {
+      "at": {
+       "file": "src/mod_406210.js",
+       "line": 5,
+       "repo": "repo-16"
+      },
+      "at_other": {
+       "file": "src/mod_369b49.py",
+       "line": 175,
+       "repo": "repo-18"
+      },
+      "identifier": "SHARED_ENV_13",
+      "kind": "env"
+     },
+     {
+      "at": {
+       "file": "src/mod_24adbd.ts",
+       "line": 30,
+       "repo": "repo-01"
+      },
+      "at_other": {
+       "file": "src/mod_5f7d31.ts",
+       "line": 20,
+       "repo": "repo-06"
+      },
+      "identifier": "SHARED_ENV_13",
+      "kind": "env"
+     },
+     {
+      "at": {
+       "file": "src/mod_24adbd.ts",
+       "line": 30,
+       "repo": "repo-01"
+      },
+      "at_other": {
+       "file": "src/mod_a9f766.py",
+       "line": 54,
+       "repo": "repo-09"
+      },
+      "identifier": "SHARED_ENV_13",
+      "kind": "env"
+     },
+     {
+      "at": {
+       "file": "src/mod_24adbd.ts",
+       "line": 30,
+       "repo": "repo-01"
+      },
+      "at_other": {
+       "file": "src/mod_805c71.py",
+       "line": 118,
+       "repo": "repo-11"
+      },
+      "identifier": "SHARED_ENV_13",
+      "kind": "env"
+     },
+     {
+      "at": {
+       "file": "src/mod_24adbd.ts",
+       "line": 30,
+       "repo": "repo-01"
+      },
+      "at_other": {
+       "file": "src/mod_369b49.py",
+       "line": 175,
+       "repo": "repo-18"
+      },
+      "identifier": "SHARED_ENV_13",
+      "kind": "env"
+     }
+    ]
+   },
+   {
+    "consequence": "rotating or revoking it breaks every listed repo silently; archiving any of them strands a live credential in it",
+    "kind": "SHARED_CREDENTIAL",
+    "repos": [
+     "repo-02",
+     "repo-07",
+     "repo-11",
+     "repo-13"
+    ],
+    "severity": "critical",
+    "summary": "SHARED_ENV_16 is read by 4 repositories (repo-02, repo-07, repo-11, repo-13)",
+    "witnesses": [
+     {
+      "at": {
+       "file": "src/mod_805c71.py",
+       "line": 424,
+       "repo": "repo-11"
+      },
+      "at_other": {
+       "file": "src/mod_f0cb83.py",
+       "line": 40,
+       "repo": "repo-13"
+      },
+      "identifier": "SHARED_ENV_16",
+      "kind": "env"
+     },
+     {
+      "at": {
+       "file": ".aider.conf.yml",
+       "line": 12,
+       "repo": "repo-02"
+      },
+      "at_other": {
+       "file": ".aider.conf.yml",
+       "line": 12,
+       "repo": "repo-07"
+      },
+      "identifier": "SHARED_ENV_16",
+      "kind": "env"
+     },
+     {
+      "at": {
+       "file": ".aider.conf.yml",
+       "line": 12,
+       "repo": "repo-02"
+      },
+      "at_other": {
+       "file": "src/mod_805c71.py",
+       "line": 424,
+       "repo": "repo-11"
+      },
+      "identifier": "SHARED_ENV_16",
+      "kind": "env"
+     },
+     {
+      "at": {
+       "file": ".aider.conf.yml",
+       "line": 12,
+       "repo": "repo-02"
+      },
+      "at_other": {
+       "file": "src/mod_f0cb83.py",
+       "line": 40,
+       "repo": "repo-13"
+      },
+      "identifier": "SHARED_ENV_16",
+      "kind": "env"
+     },
+     {
+      "at": {
+       "file": ".aider.conf.yml",
+       "line": 12,
+       "repo": "repo-07"
+      },
+      "at_other": {
+       "file": "src/mod_805c71.py",
+       "line": 424,
+       "repo": "repo-11"
+      },
+      "identifier": "SHARED_ENV_16",
+      "kind": "env"
+     },
+     {
+      "at": {
+       "file": ".aider.conf.yml",
+       "line": 12,
+       "repo": "repo-07"
+      },
+      "at_other": {
+       "file": "src/mod_f0cb83.py",
+       "line": 40,
+       "repo": "repo-13"
+      },
+      "identifier": "SHARED_ENV_16",
+      "kind": "env"
+     }
+    ]
+   },
+   {
+    "consequence": "rotating or revoking it breaks every listed repo silently; archiving any of them strands a live credential in it",
+    "kind": "SHARED_CREDENTIAL",
+    "repos": [
+     "repo-05",
+     "repo-06"
+    ],
+    "severity": "critical",
+    "summary": "SHARED_ENV_15 is read by 2 repositories (repo-05, repo-06)",
+    "witnesses": [
+     {
+      "at": {
+       "file": "src/mod_587f78.ts",
+       "line": 114,
+       "repo": "repo-05"
+      },
+      "at_other": {
+       "file": "src/mod_66f302.ts",
+       "line": 64,
+       "repo": "repo-06"
+      },
+      "identifier": "SHARED_ENV_15",
+      "kind": "env"
+     }
+    ]
+   },
+   {
+    "consequence": "rotating or revoking it breaks every listed repo silently; archiving any of them strands a live credential in it",
+    "kind": "SHARED_CREDENTIAL",
+    "repos": [
+     "repo-05",
+     "repo-06"
+    ],
+    "severity": "critical",
+    "summary": "SHARED_ENV_20 is read by 2 repositories (repo-05, repo-06)",
+    "witnesses": [
+     {
+      "at": {
+       "file": "src/mod_587f78.ts",
+       "line": 113,
+       "repo": "repo-05"
+      },
+      "at_other": {
+       "file": "src/mod_a1dc8e.ts",
+       "line": 63,
+       "repo": "repo-06"
+      },
+      "identifier": "SHARED_ENV_20",
+      "kind": "env"
+     }
+    ]
+   },
+   {
+    "consequence": "rotating or revoking it breaks every listed repo silently; archiving any of them strands a live credential in it",
+    "kind": "SHARED_CREDENTIAL",
+    "repos": [
+     "repo-06",
+     "repo-07"
+    ],
+    "severity": "critical",
+    "summary": "SHARED_ENV_06 is read by 2 repositories (repo-06, repo-07) \u2014 none of them declare a relationship admitting it",
+    "witnesses": [
+     {
+      "at": {
+       "file": "src/mod_5c29dd.sh",
+       "line": 40,
+       "repo": "repo-06"
+      },
+      "at_other": {
+       "file": "src/mod_fc893c.py",
+       "line": 65,
+       "repo": "repo-07"
+      },
+      "identifier": "SHARED_ENV_06",
+      "kind": "env"
+     }
+    ]
+   },
+   {
+    "consequence": "rotating or revoking it breaks every listed repo silently; archiving any of them strands a live credential in it",
+    "kind": "SHARED_CREDENTIAL",
+    "repos": [
+     "repo-06",
+     "repo-07",
+     "repo-16"
+    ],
+    "severity": "critical",
+    "summary": "SHARED_ENV_01 is read by 3 repositories (repo-06, repo-07, repo-16) \u2014 none of them declare a relationship admitting it",
+    "witnesses": [
+     {
+      "at": {
+       "file": "src/mod_5c29dd.sh",
+       "line": 41,
+       "repo": "repo-06"
+      },
+      "at_other": {
+       "file": "src/mod_67e265.py",
+       "line": 24,
+       "repo": "repo-07"
+      },
+      "identifier": "SHARED_ENV_01",
+      "kind": "env"
+     },
+     {
+      "at": {
+       "file": "src/mod_5c29dd.sh",
+       "line": 41,
+       "repo": "repo-06"
+      },
+      "at_other": {
+       "file": "server.js",
+       "line": 158,
+       "repo": "repo-16"
+      },
+      "identifier": "SHARED_ENV_01",
+      "kind": "env"
+     },
+     {
+      "at": {
+       "file": "src/mod_67e265.py",
+       "line": 24,
+       "repo": "repo-07"
+      },
+      "at_other": {
+       "file": "server.js",
+       "line": 158,
+       "repo": "repo-16"
+      },
+      "identifier": "SHARED_ENV_01",
+      "kind": "env"
+     }
+    ]
+   },
+   {
+    "consequence": "rotating or revoking it breaks every listed repo silently; archiving any of them strands a live credential in it",
+    "kind": "SHARED_CREDENTIAL",
+    "repos": [
+     "repo-06",
+     "repo-16"
+    ],
+    "severity": "critical",
+    "summary": "SHARED_ENV_19 is read by 2 repositories (repo-06, repo-16) \u2014 none of them declare a relationship admitting it",
+    "witnesses": [
+     {
+      "at": {
+       "file": "src/mod_f20765.ts",
+       "line": 55,
+       "repo": "repo-06"
+      },
+      "at_other": {
+       "file": "src/mod_685bb9.js",
+       "line": 11,
+       "repo": "repo-16"
+      },
+      "identifier": "SHARED_ENV_19",
+      "kind": "env"
+     }
+    ]
+   },
+   {
+    "consequence": "rotating or revoking it breaks every listed repo silently; archiving any of them strands a live credential in it",
+    "kind": "SHARED_CREDENTIAL",
+    "repos": [
+     "repo-16",
+     "repo-18",
+     "repo-19"
+    ],
+    "severity": "critical",
+    "summary": "SHARED_ENV_14 is read by 3 repositories (repo-16, repo-18, repo-19)",
+    "witnesses": [
+     {
+      "at": {
+       "file": "src/mod_e765c5.js",
+       "line": 7,
+       "repo": "repo-18"
+      },
+      "at_other": {
+       "file": "src/mod_e765c5.js",
+       "line": 7,
+       "repo": "repo-19"
+      },
+      "identifier": "SHARED_ENV_14",
+      "kind": "env"
+     },
+     {
+      "at": {
+       "file": "src/mod_4e0e7f.js",
+       "line": 11,
+       "repo": "repo-16"
+      },
+      "at_other": {
+       "file": "src/mod_e765c5.js",
+       "line": 7,
+       "repo": "repo-18"
+      },
+      "identifier": "SHARED_ENV_14",
+      "kind": "env"
+     },
+     {
+      "at": {
+       "file": "src/mod_4e0e7f.js",
+       "line": 11,
+       "repo": "repo-16"
+      },
+      "at_other": {
+       "file": "src/mod_e765c5.js",
+       "line": 7,
+       "repo": "repo-19"
+      },
+      "identifier": "SHARED_ENV_14",
+      "kind": "env"
+     }
+    ]
+   },
+   {
+    "consequence": "rotating or revoking it breaks every listed repo silently; archiving any of them strands a live credential in it",
+    "kind": "SHARED_CREDENTIAL",
+    "repos": [
+     "repo-18",
+     "repo-19"
+    ],
+    "severity": "critical",
+    "summary": "SHARED_ENV_17 is read by 2 repositories (repo-18, repo-19) \u2014 none of them declare a relationship admitting it",
+    "witnesses": [
+     {
+      "at": {
+       "file": "src/mod_15165e.js",
+       "line": 5,
+       "repo": "repo-18"
+      },
+      "at_other": {
+       "file": "src/mod_15165e.js",
+       "line": 5,
+       "repo": "repo-19"
+      },
+      "identifier": "SHARED_ENV_17",
+      "kind": "env"
+     }
+    ]
+   },
+   {
+    "consequence": "the copies will drift; every future fix lands in one and rots in the other, and nobody can say which copy is canonical",
+    "kind": "FORK_DRIFT",
+    "repos": [
+     "repo-06",
+     "repo-07"
+    ],
+    "severity": "high",
+    "summary": "repo-06 and repo-07 share 131 byte-identical files (48.3% of the smaller repo)",
+    "witnesses": [
+     {
+      "a_path": "sia-v6-platform/agent/AGENT_MANIFEST.md",
+      "b_path": "agent/AGENT_MANIFEST.md",
+      "identical": true,
+      "suffix": "agent/AGENT_MANIFEST.md"
+     },
+     {
+      "a_path": "sia-v6-platform/agent/path_a/job_config.yaml",
+      "b_path": "agent/path_a/job_config.yaml",
+      "identical": true,
+      "suffix": "agent/path_a/job_config.yaml"
+     },
+     {
+      "a_path": "sia-v6-platform/agent/path_a/ratchet_engine.py",
+      "b_path": "agent/path_a/ratchet_engine.py",
+      "identical": true,
+      "suffix": "agent/path_a/ratchet_engine.py"
+     },
+     {
+      "a_path": "sia-v6-platform/agent/path_a/ratchet_job.py",
+      "b_path": "agent/path_a/ratchet_job.py",
+      "identical": true,
+      "suffix": "agent/path_a/ratchet_job.py"
+     },
+     {
+      "a_path": "sia-v6-platform/agent/path_a/tests/test_ratchet.py",
+      "b_path": "agent/path_a/tests/test_ratchet.py",
+      "identical": true,
+      "suffix": "agent/path_a/tests/test_ratchet.py"
+     },
+     {
+      "a_path": "sia-v6-platform/agent/path_b/job_config.yaml",
+      "b_path": "agent/path_b/job_config.yaml",
+      "identical": true,
+      "suffix": "agent/path_b/job_config.yaml"
+     },
+     {
+      "a_path": "sia-v6-platform/agent/path_b/persistence_memory.py",
+      "b_path": "agent/path_b/persistence_memory.py",
+      "identical": true,
+      "suffix": "agent/path_b/persistence_memory.py"
+     },
+     {
+      "a_path": "sia-v6-platform/agent/path_b/tests/test_topology.py",
+      "b_path": "agent/path_b/tests/test_topology.py",
+      "identical": true,
+      "suffix": "agent/path_b/tests/test_topology.py"
+     },
+     {
+      "a_path": "sia-v6-platform/agent/path_b/topology_agent.py",
+      "b_path": "agent/path_b/topology_agent.py",
+      "identical": true,
+      "suffix": "agent/path_b/topology_agent.py"
+     },
+     {
+      "a_path": "sia-v6-platform/agent/path_b/topology_job.py",
+      "b_path": "agent/path_b/topology_job.py",
+      "identical": true,
+      "suffix": "agent/path_b/topology_job.py"
+     },
+     {
+      "a_path": "sia-v6-platform/agent/path_c/job_config.yaml",
+      "b_path": "agent/path_c/job_config.yaml",
+      "identical": true,
+      "suffix": "agent/path_c/job_config.yaml"
+     },
+     {
+      "a_path": "sia-v6-platform/agent/path_c/rg_job.py",
+      "b_path": "agent/path_c/rg_job.py",
+      "identical": true,
+      "suffix": "agent/path_c/rg_job.py"
+     }
+    ]
+   },
+   {
+    "consequence": "the copies will drift; every future fix lands in one and rots in the other, and nobody can say which copy is canonical",
+    "kind": "FORK_DRIFT",
+    "repos": [
+     "repo-18",
+     "repo-19"
+    ],
+    "severity": "high",
+    "summary": "repo-18 and repo-19 share 421 byte-identical files (91.7% of the smaller repo)",
+    "witnesses": [
+     {
+      "a_path": "tier1/amazon-product-scraper/.actor/actor.json",
+      "b_path": "tier1/amazon-product-scraper/.actor/actor.json",
+      "identical": true,
+      "suffix": "amazon-product-scraper/.actor/actor.json"
+     },
+     {
+      "a_path": "tier1/amazon-product-scraper/.actor/input_schema.json",
+      "b_path": "tier1/amazon-product-scraper/.actor/input_schema.json",
+      "identical": true,
+      "suffix": "amazon-product-scraper/.actor/input_schema.json"
+     },
+     {
+      "a_path": "tier1/amazon-product-scraper/.actor/output_schema.json",
+      "b_path": "tier1/amazon-product-scraper/.actor/output_schema.json",
+      "identical": true,
+      "suffix": "amazon-product-scraper/.actor/output_schema.json"
+     },
+     {
+      "a_path": "tier1/amazon-product-scraper/Dockerfile",
+      "b_path": "tier1/amazon-product-scraper/Dockerfile",
+      "identical": true,
+      "suffix": "amazon-product-scraper/Dockerfile"
+     },
+     {
+      "a_path": "tier1/amazon-product-scraper/package.json",
+      "b_path": "tier1/amazon-product-scraper/package.json",
+      "identical": true,
+      "suffix": "amazon-product-scraper/package.json"
+     },
+     {
+      "a_path": "tier1/amazon-review-scraper/.actor/actor.json",
+      "b_path": "tier1/amazon-review-scraper/.actor/actor.json",
+      "identical": true,
+      "suffix": "amazon-review-scraper/.actor/actor.json"
+     },
+     {
+      "a_path": "tier1/amazon-review-scraper/.actor/input_schema.json",
+      "b_path": "tier1/amazon-review-scraper/.actor/input_schema.json",
+      "identical": true,
+      "suffix": "amazon-review-scraper/.actor/input_schema.json"
+     },
+     {
+      "a_path": "tier1/amazon-review-scraper/.actor/output_schema.json",
+      "b_path": "tier1/amazon-review-scraper/.actor/output_schema.json",
+      "identical": true,
+      "suffix": "amazon-review-scraper/.actor/output_schema.json"
+     },
+     {
+      "a_path": "tier1/amazon-review-scraper/Dockerfile",
+      "b_path": "tier1/amazon-review-scraper/Dockerfile",
+      "identical": true,
+      "suffix": "amazon-review-scraper/Dockerfile"
+     },
+     {
+      "a_path": "tier1/amazon-review-scraper/package.json",
+      "b_path": "tier1/amazon-review-scraper/package.json",
+      "identical": true,
+      "suffix": "amazon-review-scraper/package.json"
+     },
+     {
+      "a_path": "tier1/amazon-review-scraper/src/main.js",
+      "b_path": "tier1/amazon-review-scraper/src/main.js",
+      "identical": true,
+      "suffix": "amazon-review-scraper/src/main.js"
+     },
+     {
+      "a_path": "tier2/app-store-review-scraper/.actor/actor.json",
+      "b_path": "tier2/app-store-review-scraper/.actor/actor.json",
+      "identical": true,
+      "suffix": "app-store-review-scraper/.actor/actor.json"
+     }
+    ]
+   },
+   {
+    "consequence": "the dependency is invisible to installers and auditors; removing the target looks safe",
+    "kind": "UNDECLARED_DEPENDENCY",
+    "repos": [
+     "repo-05"
+    ],
+    "severity": "high",
+    "summary": "repo-05 imports repo-01 at 1 site(s) but declares no dependency on it",
+    "witnesses": [
+     {
+      "file": "src/mod_cb0b1e.ts",
+      "line": 242,
+      "repo": "repo-05",
+      "statement": "../../repo-01/"
+     },
+     {
+      "repo": "repo-05",
+      "statement": "declared: ['@example/genai', '@example/sdk', '@example/post-quantum', '@example/vite', '@example/body-parser', '@example/express', '@example/http-errors', '@example/node', '@example/qs', '@example/range-parser', '@example/react', '@example/react-dom', '@example/send', '@example/plugin-react', 'autoprefixer', 'dotenv', 'esbuild', 'ethers', 'express', 'fast-check', 'jspdf', 'lucide-react', 'motion', 'react', 'react-dom', 'tailwindcss', 'tsx', 'typescript', 'vite', 'vitest']"
+     }
+    ]
+   },
+   {
+    "consequence": "the dependency is invisible to installers and auditors; removing the target looks safe",
+    "kind": "UNDECLARED_DEPENDENCY",
+    "repos": [
+     "repo-05"
+    ],
+    "severity": "high",
+    "summary": "repo-05 imports repo-04 at 4 site(s) but declares no dependency on it",
+    "witnesses": [
+     {
+      "file": "server.ts",
+      "line": 52,
+      "repo": "repo-05",
+      "statement": "../repo-04/"
+     },
+     {
+      "file": "src/mod_2737c4.ts",
+      "line": 95,
+      "repo": "repo-05",
+      "statement": "../repo-04/"
+     },
+     {
+      "file": "src/mod_8cfead.ts",
+      "line": 45,
+      "repo": "repo-05",
+      "statement": "../repo-04/"
+     },
+     {
+      "repo": "repo-05",
+      "statement": "declared: ['@example/genai', '@example/sdk', '@example/post-quantum', '@example/vite', '@example/body-parser', '@example/express', '@example/http-errors', '@example/node', '@example/qs', '@example/range-parser', '@example/react', '@example/react-dom', '@example/send', '@example/plugin-react', 'autoprefixer', 'dotenv', 'esbuild', 'ethers', 'express', 'fast-check', 'jspdf', 'lucide-react', 'motion', 'react', 'react-dom', 'tailwindcss', 'tsx', 'typescript', 'vite', 'vitest']"
+     }
+    ]
+   },
+   {
+    "consequence": "the dependency is invisible to installers and auditors; removing the target looks safe",
+    "kind": "UNDECLARED_DEPENDENCY",
+    "repos": [
+     "repo-06"
+    ],
+    "severity": "high",
+    "summary": "repo-06 imports repo-05 at 2 site(s) but declares no dependency on it",
+    "witnesses": [
+     {
+      "file": "src/mod_3f5ce2.ts",
+      "line": 24,
+      "repo": "repo-06",
+      "statement": "../repo-05/"
+     },
+     {
+      "file": "src/mod_3f5ce2.ts",
+      "line": 104,
+      "repo": "repo-06",
+      "statement": "../repo-05/"
+     },
+     {
+      "repo": "repo-06",
+      "statement": "declared: ['@example/bigquery', '@example/run', '@example/storage', '@example/renderer', '@example/connectors-sdk', '@example/react-query', '@example/node', 'esbuild', 'fastapi==0.115.0', 'google-auth-library', 'numpy==1.26.4', 'numpy>=1.26,<2.0', 'numpy>=1.26,<3', 'orval', 'prettier', 'psycopg2-binary==2.9.9', 'psycopg2-binary>=2.9,<3.0', 'pydantic==2.9.0', 'react', 'react-dom', 'requests>=2.31,<3.0', 'scipy>=1.12,<2.0', 'tsx', 'typescript', 'uvicorn[standard]==0.30.0', 'zod']"
+     }
+    ]
+   },
+   {
+    "consequence": "the dependency is invisible to installers and auditors; removing the target looks safe",
+    "kind": "UNDECLARED_DEPENDENCY",
+    "repos": [
+     "repo-11"
+    ],
+    "severity": "high",
+    "summary": "repo-11 imports repo-04 at 1 site(s) but declares no dependency on it",
+    "witnesses": [
+     {
+      "file": "src/mod_805c71.py",
+      "line": 62,
+      "repo": "repo-11",
+      "statement": "../repo-04/"
+     },
+     {
+      "repo": "repo-11",
+      "statement": "declared: ['httpx>=0.27', 'pytest>=7', 'repo-20 @ git+https://example.com/redacted']"
+     }
+    ]
+   },
+   {
+    "consequence": "the dependency is invisible to installers and auditors; removing the target looks safe",
+    "kind": "UNDECLARED_DEPENDENCY",
+    "repos": [
+     "repo-11"
+    ],
+    "severity": "high",
+    "summary": "repo-11 imports repo-13 at 3 site(s) but declares no dependency on it",
+    "witnesses": [
+     {
+      "file": "src/mod_235554.py",
+      "line": 23,
+      "repo": "repo-11",
+      "statement": "polygraph.core.arbiter_kernel"
+     },
+     {
+      "file": "src/mod_445f63.py",
+      "line": 42,
+      "repo": "repo-11",
+      "statement": "polygraph.core.arbiter_kernel"
+     },
+     {
+      "file": "src/mod_31a5ac.py",
+      "line": 49,
+      "repo": "repo-11",
+      "statement": "polygraph.core.arbiter_kernel"
+     },
+     {
+      "repo": "repo-11",
+      "statement": "declared: ['httpx>=0.27', 'pytest>=7', 'repo-20 @ git+https://example.com/redacted']"
+     }
+    ]
+   },
+   {
+    "consequence": "the dependency is invisible to installers and auditors; removing the target looks safe",
+    "kind": "UNDECLARED_DEPENDENCY",
+    "repos": [
+     "repo-16"
+    ],
+    "severity": "high",
+    "summary": "repo-16 imports repo-19 at 1 site(s) but declares no dependency on it",
+    "witnesses": [
+     {
+      "file": "src/mod_cfe658.js",
+      "line": 8,
+      "repo": "repo-16",
+      "statement": "../../repo-19/"
+     },
+     {
+      "repo": "repo-16",
+      "statement": "declared: ['express', 'ws']"
+     }
+    ]
+   },
+   {
+    "consequence": "the manifest points at a stale owner; installs fetch from the wrong place or fail",
+    "kind": "DECLARATION_MISMATCH",
+    "repos": [
+     "local",
+     "repo-11"
+    ],
+    "severity": "medium",
+    "summary": "repo-11 declares a dependency on repo-20 at github.com/example/, but it is actually hosted at github.com/example/",
+    "witnesses": [
+     {
+      "repo": "repo-11",
+      "statement": "repo-20 @ git+https://example.com/redacted"
+     },
+     {
+      "repo": "local",
+      "statement": "actual owner of repo-20"
+     }
+    ]
+   },
+   {
+    "consequence": "schema or config changes on one side reach the other with no deploy signal",
+    "kind": "SHARED_OPERATIONAL_STATE",
+    "repos": [
+     "repo-02",
+     "repo-05"
+    ],
+    "severity": "medium",
+    "summary": "repo-02 and repo-05 share 1 operational identifier(s): SHARED_ENV_10",
+    "witnesses": [
+     {
+      "at": {
+       "file": "vite.config.ts",
+       "line": 21,
+       "repo": "repo-02"
+      },
+      "at_other": {
+       "file": "vite.config.ts",
+       "line": 17,
+       "repo": "repo-05"
+      },
+      "identifier": "SHARED_ENV_10",
+      "kind": "env"
+     }
+    ]
+   },
+   {
+    "consequence": "schema or config changes on one side reach the other with no deploy signal",
+    "kind": "SHARED_OPERATIONAL_STATE",
+    "repos": [
+     "repo-03",
+     "repo-12"
+    ],
+    "severity": "medium",
+    "summary": "repo-03 and repo-12 share 1 operational identifier(s): SHARED_ENV_12",
+    "witnesses": [
+     {
+      "at": {
+       "file": "src/mod_509367.mjs",
+       "line": 6,
+       "repo": "repo-03"
+      },
+      "at_other": {
+       "file": "src/mod_c95021.yml",
+       "line": 155,
+       "repo": "repo-12"
+      },
+      "identifier": "SHARED_ENV_12",
+      "kind": "env"
+     }
+    ]
+   },
+   {
+    "consequence": "schema or config changes on one side reach the other with no deploy signal",
+    "kind": "SHARED_OPERATIONAL_STATE",
+    "repos": [
+     "repo-06",
+     "repo-10"
+    ],
+    "severity": "medium",
+    "summary": "repo-06 and repo-10 share 1 operational identifier(s): SHARED_ENV_03",
+    "witnesses": [
+     {
+      "at": {
+       "file": "src/mod_8525d7.py",
+       "line": 8,
+       "repo": "repo-06"
+      },
+      "at_other": {
+       "file": "drizzle.config.ts",
+       "line": 8,
+       "repo": "repo-10"
+      },
+      "identifier": "SHARED_ENV_03",
+      "kind": "env"
+     }
+    ]
+   },
+   {
+    "consequence": "schema or config changes on one side reach the other with no deploy signal",
+    "kind": "SHARED_OPERATIONAL_STATE",
+    "repos": [
+     "repo-07",
+     "repo-10"
+    ],
+    "severity": "medium",
+    "summary": "repo-07 and repo-10 share 1 operational identifier(s): SHARED_ENV_03",
+    "witnesses": [
+     {
+      "at": {
+       "file": "src/mod_67e265.py",
+       "line": 25,
+       "repo": "repo-07"
+      },
+      "at_other": {
+       "file": "drizzle.config.ts",
+       "line": 8,
+       "repo": "repo-10"
+      },
+      "identifier": "SHARED_ENV_03",
+      "kind": "env"
+     }
+    ]
+   },
+   {
+    "consequence": "schema or config changes on one side reach the other with no deploy signal",
+    "kind": "SHARED_OPERATIONAL_STATE",
+    "repos": [
+     "repo-07",
+     "repo-18"
+    ],
+    "severity": "medium",
+    "summary": "repo-07 and repo-18 share 1 operational identifier(s): SHARED_ENV_05",
+    "witnesses": [
+     {
+      "at": {
+       "file": "src/mod_37df70.py",
+       "line": 67,
+       "repo": "repo-07"
+      },
+      "at_other": {
+       "file": "src/mod_1aecb2.py",
+       "line": 23,
+       "repo": "repo-18"
+      },
+      "identifier": "SHARED_ENV_05",
+      "kind": "env"
+     }
+    ]
+   },
+   {
+    "consequence": "schema or config changes on one side reach the other with no deploy signal",
+    "kind": "SHARED_OPERATIONAL_STATE",
+    "repos": [
+     "repo-10",
+     "repo-16"
+    ],
+    "severity": "medium",
+    "summary": "repo-10 and repo-16 share 1 operational identifier(s): SHARED_ENV_03",
+    "witnesses": [
+     {
+      "at": {
+       "file": "drizzle.config.ts",
+       "line": 8,
+       "repo": "repo-10"
+      },
+      "at_other": {
+       "file": "src/mod_ea8e29.js",
+       "line": 11,
+       "repo": "repo-16"
+      },
+      "identifier": "SHARED_ENV_03",
+      "kind": "env"
+     }
+    ]
+   },
+   {
+    "consequence": "copied content drifts from its source",
+    "kind": "VENDORED_CONTENT",
+    "repos": [
+     "repo-06",
+     "repo-10"
+    ],
+    "severity": "medium",
+    "summary": "repo-06 and repo-10 share 11 byte-identical files",
+    "witnesses": [
+     {
+      "a_path": "sia-v6-platform/artifacts/github-audit/src/components/ui/aspect-ratio.tsx",
+      "b_path": "client/src/components/ui/aspect-ratio.tsx",
+      "identical": true,
+      "suffix": "components/ui/aspect-ratio.tsx"
+     },
+     {
+      "a_path": "sia-v6-platform/artifacts/github-audit/src/components/ui/breadcrumb.tsx",
+      "b_path": "client/src/components/ui/breadcrumb.tsx",
+      "identical": true,
+      "suffix": "components/ui/breadcrumb.tsx"
+     },
+     {
+      "a_path": "sia-v6-platform/artifacts/github-audit/src/components/ui/collapsible.tsx",
+      "b_path": "client/src/components/ui/collapsible.tsx",
+      "identical": true,
+      "suffix": "components/ui/collapsible.tsx"
+     },
+     {
+      "a_path": "sia-v6-platform/artifacts/github-audit/src/components/ui/resizable.tsx",
+      "b_path": "client/src/components/ui/resizable.tsx",
+      "identical": true,
+      "suffix": "components/ui/resizable.tsx"
+     },
+     {
+      "a_path": "sia-v6-platform/artifacts/github-audit/src/components/ui/scroll-area.tsx",
+      "b_path": "client/src/components/ui/scroll-area.tsx",
+      "identical": true,
+      "suffix": "components/ui/scroll-area.tsx"
+     },
+     {
+      "a_path": "sia-v6-platform/artifacts/github-audit/src/components/ui/separator.tsx",
+      "b_path": "client/src/components/ui/separator.tsx",
+      "identical": true,
+      "suffix": "components/ui/separator.tsx"
+     },
+     {
+      "a_path": "sia-v6-platform/artifacts/github-audit/src/components/ui/sidebar.tsx",
+      "b_path": "client/src/components/ui/sidebar.tsx",
+      "identical": true,
+      "suffix": "components/ui/sidebar.tsx"
+     },
+     {
+      "a_path": "sia-v6-platform/artifacts/github-audit/src/components/ui/toaster.tsx",
+      "b_path": "client/src/components/ui/toaster.tsx",
+      "identical": true,
+      "suffix": "components/ui/toaster.tsx"
+     },
+     {
+      "a_path": "sia-v6-platform/artifacts/github-audit/src/hooks/use-mobile.tsx",
+      "b_path": "client/src/hooks/use-mobile.tsx",
+      "identical": true,
+      "suffix": "hooks/use-mobile.tsx"
+     },
+     {
+      "a_path": "sia-v6-platform/artifacts/github-audit/src/hooks/use-toast.ts",
+      "b_path": "client/src/hooks/use-toast.ts",
+      "identical": true,
+      "suffix": "hooks/use-toast.ts"
+     },
+     {
+      "a_path": "sia-v6-platform/artifacts/github-audit/src/pages/not-found.tsx",
+      "b_path": "client/src/pages/not-found.tsx",
+      "identical": true,
+      "suffix": "pages/not-found.tsx"
+     },
+     {
+      "a_path": "sia-v6-platform/artifacts/github-audit/src/components/ui/aspect-ratio.tsx",
+      "b_path": "client/src/components/ui/aspect-ratio.tsx",
+      "identical": true,
+      "suffix": "src/components/ui/aspect-ratio.tsx"
+     }
+    ]
+   },
+   {
+    "consequence": "nothing uses it \u2014 a candidate for archival, if the certificate also holds",
+    "kind": "NO_CONSUMERS",
+    "repos": [
+     "repo-02"
+    ],
+    "severity": "low",
+    "summary": "nothing in the ecosystem imports from repo-02",
+    "witnesses": [
+     {
+      "repo": "repo-02",
+      "statement": "no incoming cross-repo imports"
+     }
+    ]
+   },
+   {
+    "consequence": "nothing uses it \u2014 a candidate for archival, if the certificate also holds",
+    "kind": "NO_CONSUMERS",
+    "repos": [
+     "repo-03"
+    ],
+    "severity": "low",
+    "summary": "nothing in the ecosystem imports from repo-03",
+    "witnesses": [
+     {
+      "repo": "repo-03",
+      "statement": "no incoming cross-repo imports"
+     }
+    ]
+   },
+   {
+    "consequence": "nothing uses it \u2014 a candidate for archival, if the certificate also holds",
+    "kind": "NO_CONSUMERS",
+    "repos": [
+     "repo-06"
+    ],
+    "severity": "low",
+    "summary": "nothing in the ecosystem imports from repo-06",
+    "witnesses": [
+     {
+      "repo": "repo-06",
+      "statement": "no incoming cross-repo imports"
+     }
+    ]
+   },
+   {
+    "consequence": "nothing uses it \u2014 a candidate for archival, if the certificate also holds",
+    "kind": "NO_CONSUMERS",
+    "repos": [
+     "repo-07"
+    ],
+    "severity": "low",
+    "summary": "nothing in the ecosystem imports from repo-07",
+    "witnesses": [
+     {
+      "repo": "repo-07",
+      "statement": "no incoming cross-repo imports"
+     }
+    ]
+   },
+   {
+    "consequence": "nothing uses it \u2014 a candidate for archival, if the certificate also holds",
+    "kind": "NO_CONSUMERS",
+    "repos": [
+     "repo-08"
+    ],
+    "severity": "low",
+    "summary": "nothing in the ecosystem imports from repo-08",
+    "witnesses": [
+     {
+      "repo": "repo-08",
+      "statement": "no incoming cross-repo imports"
+     }
+    ]
+   },
+   {
+    "consequence": "nothing uses it \u2014 a candidate for archival, if the certificate also holds",
+    "kind": "NO_CONSUMERS",
+    "repos": [
+     "repo-09"
+    ],
+    "severity": "low",
+    "summary": "nothing in the ecosystem imports from repo-09",
+    "witnesses": [
+     {
+      "repo": "repo-09",
+      "statement": "no incoming cross-repo imports"
+     }
+    ]
+   },
+   {
+    "consequence": "nothing uses it \u2014 a candidate for archival, if the certificate also holds",
+    "kind": "NO_CONSUMERS",
+    "repos": [
+     "repo-10"
+    ],
+    "severity": "low",
+    "summary": "nothing in the ecosystem imports from repo-10",
+    "witnesses": [
+     {
+      "repo": "repo-10",
+      "statement": "no incoming cross-repo imports"
+     }
+    ]
+   },
+   {
+    "consequence": "nothing uses it \u2014 a candidate for archival, if the certificate also holds",
+    "kind": "NO_CONSUMERS",
+    "repos": [
+     "repo-11"
+    ],
+    "severity": "low",
+    "summary": "nothing in the ecosystem imports from repo-11",
+    "witnesses": [
+     {
+      "repo": "repo-11",
+      "statement": "no incoming cross-repo imports"
+     }
+    ]
+   },
+   {
+    "consequence": "nothing uses it \u2014 a candidate for archival, if the certificate also holds",
+    "kind": "NO_CONSUMERS",
+    "repos": [
+     "repo-12"
+    ],
+    "severity": "low",
+    "summary": "nothing in the ecosystem imports from repo-12",
+    "witnesses": [
+     {
+      "repo": "repo-12",
+      "statement": "no incoming cross-repo imports"
+     }
+    ]
+   },
+   {
+    "consequence": "nothing uses it \u2014 a candidate for archival, if the certificate also holds",
+    "kind": "NO_CONSUMERS",
+    "repos": [
+     "repo-14"
+    ],
+    "severity": "low",
+    "summary": "nothing in the ecosystem imports from repo-14",
+    "witnesses": [
+     {
+      "repo": "repo-14",
+      "statement": "no incoming cross-repo imports"
+     }
+    ]
+   },
+   {
+    "consequence": "nothing uses it \u2014 a candidate for archival, if the certificate also holds",
+    "kind": "NO_CONSUMERS",
+    "repos": [
+     "repo-15"
+    ],
+    "severity": "low",
+    "summary": "nothing in the ecosystem imports from repo-15",
+    "witnesses": [
+     {
+      "repo": "repo-15",
+      "statement": "no incoming cross-repo imports"
+     }
+    ]
+   },
+   {
+    "consequence": "nothing uses it \u2014 a candidate for archival, if the certificate also holds",
+    "kind": "NO_CONSUMERS",
+    "repos": [
+     "repo-16"
+    ],
+    "severity": "low",
+    "summary": "nothing in the ecosystem imports from repo-16",
+    "witnesses": [
+     {
+      "repo": "repo-16",
+      "statement": "no incoming cross-repo imports"
+     }
+    ]
+   },
+   {
+    "consequence": "nothing uses it \u2014 a candidate for archival, if the certificate also holds",
+    "kind": "NO_CONSUMERS",
+    "repos": [
+     "repo-17"
+    ],
+    "severity": "low",
+    "summary": "nothing in the ecosystem imports from repo-17",
+    "witnesses": [
+     {
+      "repo": "repo-17",
+      "statement": "no incoming cross-repo imports"
+     }
+    ]
+   },
+   {
+    "consequence": "nothing uses it \u2014 a candidate for archival, if the certificate also holds",
+    "kind": "NO_CONSUMERS",
+    "repos": [
+     "repo-18"
+    ],
+    "severity": "low",
+    "summary": "nothing in the ecosystem imports from repo-18",
+    "witnesses": [
+     {
+      "repo": "repo-18",
+      "statement": "no incoming cross-repo imports"
+     }
+    ]
+   }
+  ]
+ },
+ "seams": [
+  {
+   "from": "repo-05",
+   "resolved_symbols": [],
+   "sites": 1,
+   "symbols": [],
+   "to": "repo-01",
+   "unresolved_symbols": []
+  },
+  {
+   "from": "repo-05",
+   "resolved_symbols": [],
+   "sites": 4,
+   "symbols": [],
+   "to": "repo-04",
+   "unresolved_symbols": []
+  },
+  {
+   "from": "repo-06",
+   "resolved_symbols": [],
+   "sites": 2,
+   "symbols": [],
+   "to": "repo-05",
+   "unresolved_symbols": []
+  },
+  {
+   "from": "repo-11",
+   "resolved_symbols": [],
+   "sites": 1,
+   "symbols": [],
+   "to": "repo-04",
+   "unresolved_symbols": []
+  },
+  {
+   "from": "repo-11",
+   "resolved_symbols": [
+    {
+     "defined_in": [
+      {
+       "file": "src/mod_ec6ec8.py",
+       "line": 439,
+       "module": "polygraph.core.arbiter_kernel"
+      }
+     ],
+     "imported_at": {
+      "file": "src/mod_235554.py",
+      "line": 23
+     },
+     "resolved_in_imported_module": true,
+     "symbol": "symbol_02",
+     "via": "symbol_03"
+    },
+    {
+     "defined_in": [
+      {
+       "file": "src/mod_ec6ec8.py",
+       "line": 439,
+       "module": "polygraph.core.arbiter_kernel"
+      }
+     ],
+     "imported_at": {
+      "file": "src/mod_445f63.py",
+      "line": 42
+     },
+     "resolved_in_imported_module": true,
+     "symbol": "symbol_02",
+     "via": "symbol_03"
+    },
+    {
+     "defined_in": [
+      {
+       "file": "src/mod_ec6ec8.py",
+       "line": 439,
+       "module": "polygraph.core.arbiter_kernel"
+      }
+     ],
+     "imported_at": {
+      "file": "src/mod_31a5ac.py",
+      "line": 49
+     },
+     "resolved_in_imported_module": true,
+     "symbol": "symbol_02",
+     "via": "symbol_03"
+    }
+   ],
+   "sites": 3,
+   "symbols": [
+    {
+     "defined_in": [
+      {
+       "file": "src/mod_ec6ec8.py",
+       "line": 439,
+       "module": "polygraph.core.arbiter_kernel"
+      }
+     ],
+     "imported_at": {
+      "file": "src/mod_235554.py",
+      "line": 23
+     },
+     "resolved_in_imported_module": true,
+     "symbol": "symbol_02",
+     "via": "symbol_03"
+    },
+    {
+     "defined_in": [
+      {
+       "file": "src/mod_ec6ec8.py",
+       "line": 439,
+       "module": "polygraph.core.arbiter_kernel"
+      }
+     ],
+     "imported_at": {
+      "file": "src/mod_445f63.py",
+      "line": 42
+     },
+     "resolved_in_imported_module": true,
+     "symbol": "symbol_02",
+     "via": "symbol_03"
+    },
+    {
+     "defined_in": [
+      {
+       "file": "src/mod_ec6ec8.py",
+       "line": 439,
+       "module": "polygraph.core.arbiter_kernel"
+      }
+     ],
+     "imported_at": {
+      "file": "src/mod_31a5ac.py",
+      "line": 49
+     },
+     "resolved_in_imported_module": true,
+     "symbol": "symbol_02",
+     "via": "symbol_03"
+    }
+   ],
+   "to": "repo-13",
+   "unresolved_symbols": []
+  },
+  {
+   "from": "repo-11",
+   "resolved_symbols": [
+    {
+     "defined_in": [
+      {
+       "file": "src/mod_665c1f.py",
+       "line": 46,
+       "module": "sia_v6.fitness"
+      }
+     ],
+     "imported_at": {
+      "file": "src/mod_35ea4d.py",
+      "line": 21
+     },
+     "resolved_in_imported_module": true,
+     "symbol": "symbol_01",
+     "via": "symbol_04"
+    }
+   ],
+   "sites": 1,
+   "symbols": [
+    {
+     "defined_in": [
+      {
+       "file": "src/mod_665c1f.py",
+       "line": 46,
+       "module": "sia_v6.fitness"
+      }
+     ],
+     "imported_at": {
+      "file": "src/mod_35ea4d.py",
+      "line": 21
+     },
+     "resolved_in_imported_module": true,
+     "symbol": "symbol_01",
+     "via": "symbol_04"
+    }
+   ],
+   "to": "repo-20",
+   "unresolved_symbols": []
+  },
+  {
+   "from": "repo-16",
+   "resolved_symbols": [],
+   "sites": 1,
+   "symbols": [],
+   "to": "repo-19",
+   "unresolved_symbols": []
+  }
+ ],
+ "similar_pairs": [
+  {
+   "a": "repo-06",
+   "b": "repo-10",
+   "score": 89.1125,
+   "shared_rare": [
+    "drizzle-kit",
+    "drizzle-orm",
+    "pg",
+    "recharts",
+    "zod",
+    "@example/react-accordion",
+    "@example/react-alert-dialog",
+    "@example/react-aspect-ratio",
+    "@example/react-avatar",
+    "@example/react-checkbox",
+    "@example/react-collapsible",
+    "@example/react-context-menu"
+   ],
+   "shared_rare_count": 47,
+   "shared_total": 50,
+   "strongest": "drizzle-kit",
+   "strongest_df": 2
+  },
+  {
+   "a": "repo-06",
+   "b": "repo-18",
+   "score": 85.9706,
+   "shared_rare": [
+    "next-themes",
+    "pdf-lib",
+    "sonner",
+    "@example/react-accordion",
+    "@example/react-alert-dialog",
+    "@example/react-aspect-ratio",
+    "@example/react-avatar",
+    "@example/react-checkbox",
+    "@example/react-collapsible",
+    "@example/react-context-menu",
+    "@example/react-dialog",
+    "@example/react-dropdown-menu"
+   ],
+   "shared_rare_count": 46,
+   "shared_total": 48,
+   "strongest": "next-themes",
+   "strongest_df": 2
+  },
+  {
+   "a": "repo-10",
+   "b": "repo-18",
+   "score": 79.5091,
+   "shared_rare": [
+    "tailwindcss",
+    "tailwindcss-animate",
+    "@example/react-accordion",
+    "@example/react-alert-dialog",
+    "@example/react-aspect-ratio",
+    "@example/react-avatar",
+    "@example/react-checkbox",
+    "@example/react-collapsible",
+    "@example/react-context-menu",
+    "@example/react-dialog",
+    "@example/react-dropdown-menu",
+    "@example/react-hover-card"
+   ],
+   "shared_rare_count": 42,
+   "shared_total": 45,
+   "strongest": "tailwindcss",
+   "strongest_df": 2
+  },
+  {
+   "a": "repo-06",
+   "b": "repo-07",
+   "score": 26.0861,
+   "shared_rare": [
+    "fastmcp",
+    "google",
+    "jwt",
+    "pg8000",
+    "psycopg2",
+    "reportlab",
+    "scipy",
+    "vertexai",
+    "numpy",
+    "requests",
+    "fastapi",
+    "pydantic"
+   ],
+   "shared_rare_count": 13,
+   "shared_total": 13,
+   "strongest": "fastmcp",
+   "strongest_df": 2
+  },
+  {
+   "a": "repo-01",
+   "b": "repo-02",
+   "score": 9.1334,
+   "shared_rare": [
+    "@example/genai",
+    "@example/vite",
+    "vitest",
+    "@example/plugin-react",
+    "lucide-react",
+    "vite"
+   ],
+   "shared_rare_count": 6,
+   "shared_total": 9,
+   "strongest": "@example/genai",
+   "strongest_df": 2
+  },
+  {
+   "a": "repo-02",
+   "b": "repo-05",
+   "score": 9.1334,
+   "shared_rare": [
+    "motion",
+    "@example/vite",
+    "vitest",
+    "@example/plugin-react",
+    "lucide-react",
+    "vite"
+   ],
+   "shared_rare_count": 6,
+   "shared_total": 9,
+   "strongest": "motion",
+   "strongest_df": 2
+  },
+  {
+   "a": "repo-18",
+   "b": "repo-19",
+   "score": 8.294,
+   "shared_rare": [
+    "pdfkit",
+    "playwright",
+    "qrcode",
+    "node:child-process"
+   ],
+   "shared_rare_count": 4,
+   "shared_total": 5,
+   "strongest": "pdfkit",
+   "strongest_df": 2
+  },
+  {
+   "a": "repo-11",
+   "b": "repo-18",
+   "score": 7.6654,
+   "shared_rare": [
+    "httpx",
+    "requests",
+    "fastapi",
+    "pydantic",
+    "pytest"
+   ],
+   "shared_rare_count": 5,
+   "shared_total": 5,
+   "strongest": "httpx",
+   "strongest_df": 3
+  },
+  {
+   "a": "repo-01",
+   "b": "repo-06",
+   "score": 7.1185,
+   "shared_rare": [
+    "ws",
+    "@example/vite",
+    "@example/plugin-react",
+    "lucide-react",
+    "vite"
+   ],
+   "shared_rare_count": 5,
+   "shared_total": 8,
+   "strongest": "ws",
+   "strongest_df": 3
+  },
+  {
+   "a": "repo-03",
+   "b": "repo-10",
+   "score": 5.8091,
+   "shared_rare": [
+    "express-rate-limit",
+    "helmet",
+    "dotenv"
+   ],
+   "shared_rare_count": 3,
+   "shared_total": 5,
+   "strongest": "express-rate-limit",
+   "strongest_df": 2
+  },
+  {
+   "a": "repo-06",
+   "b": "repo-11",
+   "score": 5.7683,
+   "shared_rare": [
+    "requests",
+    "fastapi",
+    "pydantic",
+    "pytest"
+   ],
+   "shared_rare_count": 4,
+   "shared_total": 4,
+   "strongest": "requests",
+   "strongest_df": 4
+  },
+  {
+   "a": "repo-07",
+   "b": "repo-11",
+   "score": 5.7683,
+   "shared_rare": [
+    "requests",
+    "fastapi",
+    "pydantic",
+    "pytest"
+   ],
+   "shared_rare_count": 4,
+   "shared_total": 4,
+   "strongest": "requests",
+   "strongest_df": 4
+  },
+  {
+   "a": "repo-07",
+   "b": "repo-18",
+   "score": 5.7683,
+   "shared_rare": [
+    "requests",
+    "fastapi",
+    "pydantic",
+    "pytest"
+   ],
+   "shared_rare_count": 4,
+   "shared_total": 4,
+   "strongest": "requests",
+   "strongest_df": 4
+  },
+  {
+   "a": "repo-02",
+   "b": "repo-06",
+   "score": 5.2214,
+   "shared_rare": [
+    "@example/vite",
+    "@example/plugin-react",
+    "lucide-react",
+    "vite"
+   ],
+   "shared_rare_count": 4,
+   "shared_total": 7,
+   "strongest": "@example/vite",
+   "strongest_df": 4
+  },
+  {
+   "a": "repo-02",
+   "b": "repo-10",
+   "score": 5.2214,
+   "shared_rare": [
+    "dotenv",
+    "@example/plugin-react",
+    "lucide-react",
+    "vite"
+   ],
+   "shared_rare_count": 4,
+   "shared_total": 7,
+   "strongest": "dotenv",
+   "strongest_df": 4
+  },
+  {
+   "a": "repo-03",
+   "b": "repo-06",
+   "score": 4.1997,
+   "shared_rare": [
+    "cors",
+    "helmet"
+   ],
+   "shared_rare_count": 2,
+   "shared_total": 3,
+   "strongest": "cors",
+   "strongest_df": 2
+  },
+  {
+   "a": "repo-06",
+   "b": "repo-20",
+   "score": 4.1589,
+   "shared_rare": [
+    "fastapi",
+    "pydantic",
+    "pytest"
+   ],
+   "shared_rare_count": 3,
+   "shared_total": 3,
+   "strongest": "fastapi",
+   "strongest_df": 5
+  },
+  {
+   "a": "repo-07",
+   "b": "repo-20",
+   "score": 4.1589,
+   "shared_rare": [
+    "fastapi",
+    "pydantic",
+    "pytest"
+   ],
+   "shared_rare_count": 3,
+   "shared_total": 3,
+   "strongest": "fastapi",
+   "strongest_df": 5
+  },
+  {
+   "a": "repo-18",
+   "b": "repo-20",
+   "score": 4.1589,
+   "shared_rare": [
+    "fastapi",
+    "pydantic",
+    "pytest"
+   ],
+   "shared_rare_count": 3,
+   "shared_total": 3,
+   "strongest": "fastapi",
+   "strongest_df": 5
+  },
+  {
+   "a": "repo-01",
+   "b": "repo-16",
+   "score": 3.7942,
+   "shared_rare": [
+    "child-process",
+    "ws"
+   ],
+   "shared_rare_count": 2,
+   "shared_total": 3,
+   "strongest": "child-process",
+   "strongest_df": 3
+  }
+ ]
+};layout(); draw(); panel(); intro();
+
+function layout(){
+  const all=Object.keys(D.repos);
+  const connected=[...new Set(D.seams.flatMap(s=>[s.from,s.to]))].sort();
+  const certified=D.certificates.map(c=>c.repo);
+  const certSet=new Set(certified), connSet=new Set(connected);
+  // no shared code, but joined through a database, credential or bucket —
+  // the repos the code-level picture calls independent and is wrong about
+  const middle=all.filter(r=>!connSet.has(r)&&!certSet.has(r))
+    .sort((a,b)=>(D.repos[b].files-D.repos[a].files)||a.localeCompare(b));
+  const outer=certified.slice()
+    .sort((a,b)=>(D.repos[b].files-D.repos[a].files)||a.localeCompare(b));
+  const pos={};
+  const place=(list,R,ring)=>list.forEach((r,i)=>{
+    const a=-Math.PI/2 + 2*Math.PI*i/Math.max(1,list.length);
+    pos[r]={x:CX+Math.cos(a)*R, y:CY+Math.sin(a)*R, angle:a, ring};
+  });
+  place(connected, CORE_R, "core");
+  place(middle, MID_R, "mid");
+  place(outer, RING_R, "cert");
+  D._pos=pos; D._connected=connected; D._certified=outer; D._middle=middle;
+}
+
+function radius(repo){
+  const f=D.repos[repo].files;
+  return 4 + Math.min(11, Math.sqrt(f)/2.1);   // real file count
+}
+function blastSet(repo){
+  const b=D.blast_radius[repo];
+  return new Set(b?b.transitive:[]);
+}
+
+function draw(){
+  const svg=document.getElementById("svg");
+  if(svg.clientWidth){W=svg.clientWidth;H=svg.clientHeight;}
+  const scale=Math.min(W,H)/(2*(RING_R+175));
+  const ox=W/2, oy=H/2;
+  const X=p=>ox+p.x*scale, Y=p=>oy+p.y*scale;
+  let h="";
+
+  // the certificate ring itself — the visual argument of the whole picture,
+  // turning slowly like an instrument dial
+  h+=`<g><animateTransform attributeName="transform" type="rotate"
+        from="0 ${ox} ${oy}" to="360 ${ox} ${oy}" dur="120s"
+        repeatCount="indefinite"/><circle cx="${ox}" cy="${oy}" r="${RING_R*scale}" fill="none"
+        stroke="#4caf7d" stroke-opacity="0.22" stroke-width="1" stroke-dasharray="2 7"/></g>`;
+  h+=`<circle cx="${ox}" cy="${oy}" r="${CORE_R*scale}" fill="none"
+        stroke="#c9a84c" stroke-opacity="0.18" stroke-width="1"/>`;
+  h+=`<circle cx="${ox}" cy="${oy}" r="${MID_R*scale}" fill="none"
+        stroke="#e05555" stroke-opacity="0.16" stroke-width="1" stroke-dasharray="1 6"/>`;
+
+  const blast = sel ? blastSet(sel) : null;
+
+  // seams
+  D.seams.forEach(s=>{
+    const a=D._pos[s.from], b=D._pos[s.to];
+    if(!a||!b) return;
+    const x1=X(a),y1=Y(a),x2=X(b),y2=Y(b);
+    const mx=(x1+x2)/2,my=(y1+y2)/2,dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy)||1;
+    const bow=0.34*L,nx=-dy/L,ny=dx/L;
+    const dim = blast && !(blast.has(s.from)||blast.has(s.to));
+    const w=(1.6+s.sites*0.9)*Math.max(scale,0.8);
+    h+=`<path d="M${x1},${y1} Q${mx+nx*bow},${my+ny*bow} ${x2},${y2}" fill="none"
+      stroke="#c9a84c" stroke-width="${w}" opacity="${dim?0.15:0.85}"/>`;
+    if(!dim) h+=`<text x="${mx+nx*bow}" y="${my+ny*bow-6}" fill="#c9a84c"
+      font-size="10" text-anchor="middle">${s.sites} site${s.sites>1?"s":""}</text>`;
+  });
+
+  // coupling that is not an import — threads between repos that look separate
+  (D.invisible_coupling||[]).forEach(c=>{
+    const a=D._pos[c.a], b=D._pos[c.b];
+    if(!a||!b) return;
+    const x1=X(a),y1=Y(a),x2=X(b),y2=Y(b);
+    const mx=(x1+x2)/2,my=(y1+y2)/2,dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy)||1;
+    const bow=-0.16*L,nx=-dy/L,ny=dx/L;
+    const hot = blast && (blast.has(c.a)||blast.has(c.b)||c.a===sel||c.b===sel);
+    const dimEdge = blast && !(blast.has(c.a)||blast.has(c.b)||c.a===sel||c.b===sel);
+    h+=`<path d="M${x1},${y1} Q${mx+nx*bow},${my+ny*bow} ${x2},${y2}" fill="none"
+      stroke="#e05555" stroke-width="${hot?2.4:1.3}" stroke-dasharray="4 4"
+      class="${hot?"flowfast":"flow"}" opacity="${dimEdge?0.05:hot?0.95:0.55}"/>`;
+    if(hot) h+=`<text x="${mx+nx*bow}" y="${my+ny*bow+13}" fill="#e05555"
+      font-size="10" text-anchor="middle">${c.count} shared</text>`;
+  });
+
+  // shared content — copies of each other, the gold dashed arcs
+  (D.forks||[]).forEach(f=>{
+    const a=D._pos[f.a], b=D._pos[f.b];
+    if(!a||!b) return;
+    const x1=X(a),y1=Y(a),x2=X(b),y2=Y(b);
+    const mx=(x1+x2)/2,my=(y1+y2)/2,dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy)||1;
+    const bow=0.22*L,nx=-dy/L,ny=dx/L;
+    const dim = blast && !(blast.has(f.a)||blast.has(f.b)||f.a===sel||f.b===sel);
+    const big = f.verdict==="fork";
+    h+=`<path d="M${x1},${y1} Q${mx+nx*bow},${my+ny*bow} ${x2},${y2}" fill="none"
+      stroke="#c9a84c" stroke-width="${big?2.2:1.1}" stroke-dasharray="9 3 2 3"
+      class="flow" opacity="${dim?0.06:big?0.85:0.45}"/>`;
+    if(big&&!dim) h+=`<text x="${mx+nx*bow}" y="${my+ny*bow-8}" fill="#c9a84c"
+      font-size="10" text-anchor="middle">${f.identical_files} identical files</text>`;
+  });
+
+  // nodes
+  Object.entries(D._pos).forEach(([r,p])=>{
+    const x=X(p),y=Y(p),rad=radius(r)*Math.max(scale,0.75);
+    const reg=D.posture[r]?D.posture[r].regime:"isolated";
+    const col=REGIME[reg]||"#5b6b7d";
+    const isCert=p.ring==="cert";
+    const isMid=p.ring==="mid";
+    const inBlast = blast && (blast.has(r)||r===sel);
+    const dim = blast && !inBlast;
+    const isSel = r===sel;
+    const stroke = isSel ? "#fff" : inBlast ? PINK
+                 : isCert ? "#4caf7d" : isMid ? RED : col;
+    h+=`<circle cx="${x}" cy="${y}" r="${rad}" fill="${isCert?"none":col}"
+      fill-opacity="${dim?0.06:isMid?0.35:0.85}" stroke="${stroke}"
+      stroke-width="${isSel?2.2:isCert?1.1:isMid?1.4:1.5}" opacity="${dim?0.30:1}"
+      ${isCert?'stroke-dasharray="2 3"':''} data-repo="${r}" class="node${inBlast&&!dim?" hotnode":""}"/>`;
+    const flip=Math.cos(p.angle)<0;
+    const deg=p.angle*180/Math.PI;
+    const fs=isCert?9.5:isMid?10:11;
+    const label = r.length>22 ? r.slice(0,21)+"\u2026" : r;
+    h+=`<text font-size="${fs}" fill="${dim?"#3a4553":isCert?"#6f8a7c":"#fff"}"
+      dominant-baseline="middle"
+      transform="translate(${x},${y}) rotate(${flip?deg+180:deg}) translate(${rad+7},0)"
+      text-anchor="${flip?"end":"start"}"><title>${r}</title>${label}</text>`;
+  });
+
+  svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
+  svg.innerHTML=h;
+  svg.querySelectorAll("[data-repo]").forEach(el=>{
+    el.addEventListener("click",()=>{sel=el.dataset.repo;draw();detail(sel);});
+    el.addEventListener("mouseenter",()=>detail(el.dataset.repo,true));
+    el.addEventListener("mouseleave",()=>{ if(sel) detail(sel); else intro(); });
+  });
+}
+
+// ---- side panel ---------------------------------------------------------
+function intro(){
+  const m=D.measured;
+  document.getElementById("detail").innerHTML=`
+    <div class="card cert">
+      <h2 style="color:#4ade80;margin-bottom:6px">ISOLATION CERTIFICATE</h2>
+      <p class="lead">${m.certificates} of ${m.repos_total} repositories carry a
+      verified certificate of independence — no shared code <em>and</em> no shared
+      database, credential or bucket.</p>
+      <div class="kv"><span class="k">denied on operational grounds</span>
+        <span class="v" style="color:#ff4d6d">${m.certificate_denied||0}</span></div>
+      <div class="kv"><span class="k">certified repos</span><span class="v">${m.certificates}</span></div>
+      <div class="kv"><span class="k">files examined</span><span class="v">${
+        D.certificates.reduce((a,c)=>a+c.files_parsed,0).toLocaleString()}</span></div>
+      <div class="kv"><span class="k">imports examined</span><span class="v">${
+        D.certificates.reduce((a,c)=>a+c.imports_examined,0).toLocaleString()}</span></div>
+      <div class="kv"><span class="k">crossings found</span><span class="v">0</span></div>
+      <div class="w" style="margin-top:8px">Scope: ${D.certificates[0]?D.certificates[0].scope:""}</div>
+    </div>
+    <div class="card">
+      <h2>MEASURED</h2>
+      <div class="kv"><span class="k">repositories</span><span class="v">${m.repos_total}</span></div>
+      <div class="kv"><span class="k">with any seam</span><span class="v">${m.repos_with_seams}</span></div>
+      <div class="kv"><span class="k">seams</span><span class="v">${m.seam_count}</span></div>
+      <div class="kv"><span class="k">import sites</span><span class="v">${m.import_sites}</span></div>
+      <div class="kv"><span class="k">symbols crossing</span><span class="v">${m.symbols_crossing}</span></div>
+      <div class="kv"><span class="k">findings</span><span class="v">${D.findings.length}</span></div>
+      <div class="kv"><span class="k">fork pairs</span><span class="v">${(D.forks||[]).length}</span></div>
+      <div class="kv"><span class="k">emergent claims</span><span class="v">${(D.emergent||[]).length}</span></div>
+      <div class="kv"><span class="k">risk</span><span class="v">${
+        Object.entries((D.risk&&D.risk.counts)||{}).map(([k,v])=>v+" "+k).join(" · ")||"—"}</span></div>
+    </div>
+    ${(D.emergent&&D.emergent.length)?`<div class="card" style="border-color:var(--gold);background:#191408">
+      <h2 style="color:var(--gold)">WHAT ONLY THE WHOLE CAN SEE</h2>
+      ${D.emergent.slice(0,4).map(c=>`<div class="w" style="margin-bottom:5px">
+        <b>${c.kind}</b> — ${c.claim}</div>`).join("")}
+    </div>`:""}
+    `;
+}
+function detail(repo, peek){
+  const rec=D.repos[repo], p=D.posture[repo]||{};
+  const cert=D.certificates.find(c=>c.repo===repo);
+  const blast=D.blast_radius[repo];
+  const seams=D.seams.filter(s=>s.from===repo||s.to===repo);
+  let h="";
+  const denied=(D.certificate_denied||[]).find(x=>x.repo===repo);
+  if(denied && !cert){
+    h+=`<div class="card" style="border-color:#ff4d6d;background:#1c0d12">
+      <h2 style="color:#ff4d6d">CERTIFICATE DENIED</h2>
+      <p class="lead">${repo} shares no code with any other repository, but it is
+      not independent: ${denied.reason}.</p></div>`;
+  }
+  if(cert){
+    h+=`<div class="card cert">
+      <h2 style="color:#4ade80">ISOLATION CERTIFICATE</h2>
+      <p class="lead">${repo} has no code-level dependency on any other repository
+      in this ecosystem, in either direction.</p>
+      <div class="kv"><span class="k">files parsed</span><span class="v">${cert.files_parsed.toLocaleString()}</span></div>
+      <div class="kv"><span class="k">imports examined</span><span class="v">${cert.imports_examined.toLocaleString()}</span></div>
+      <div class="kv"><span class="k">cross-repo out</span><span class="v">${cert.cross_repo_out}</span></div>
+      <div class="kv"><span class="k">cross-repo in</span><span class="v">${cert.cross_repo_in}</span></div>
+      <div class="kv"><span class="k">third-party packages</span><span class="v">${cert.external_packages}</span></div>
+      <div class="w" style="margin-top:8px">Scope: ${cert.scope}</div>
+    </div>`;
+  }
+  h+=`<div class="card${blast&&blast.count?' blast':''}">
+    <h2${blast&&blast.count?' style="color:#ff7ad9"':''}>${repo}</h2>
+    <div class="kv"><span class="k">files</span><span class="v">${rec.files.toLocaleString()}</span></div>
+    <div class="kv"><span class="k">lines of code</span><span class="v">${rec.loc.toLocaleString()}</span></div>
+    <div class="kv"><span class="k">languages</span><span class="v">${
+      Object.entries(rec.languages).map(([k,v])=>k+" "+v).join(", ")||"—"}</span></div>
+    <div class="kv"><span class="k">package name</span><span class="v">${rec.package_name||"—"}</span></div>
+    <div class="kv"><span class="k">declared deps</span><span class="v">${rec.declared_dependencies.length}</span></div>
+    <div class="kv"><span class="k">third-party pkgs</span><span class="v">${rec.external_package_count}</span></div>
+    <div class="kv"><span class="k">posture</span><span class="v" style="color:${REGIME[p.regime]||'#5b6b7d'}">${p.regime||"—"}</span></div>
+    <div class="kv"><span class="k">code out / in</span><span class="v">${p.code_out??0} / ${p.code_in??0}</span></div>
+    <div class="kv"><span class="k">declared out / in</span><span class="v">${p.declared_out??0} / ${p.declared_in??0}</span></div>
+  </div>`;
+
+  if(blast && (blast.count||blast.direct.length)){
+    h+=`<div class="card blast">
+      <h2 style="color:#ff7ad9">BLAST RADIUS</h2>
+      <p class="lead">If ${repo} changes, ${blast.count===1?"1 repository breaks":blast.count+" repositories break"}.</p>
+      ${blast.transitive.map(r=>`<div class="kv"><span class="k">breaks</span><span class="v">${r}</span></div>`).join("")}
+    </div>`;
+  } else if(!cert){
+    h+=`<div class="card"><h2>BLAST RADIUS</h2>
+      <p class="lead">Nothing in this ecosystem depends on ${repo}.</p>
+      <div class="kv"><span class="k">blast radius</span><span class="v">0</span></div></div>`;
+  }
+
+  const invis=(D.invisible_coupling||[]).filter(c=>c.a===repo||c.b===repo);
+  if(invis.length){
+    h+=`<div class="card" style="border-color:#ff4d6d;background:#1c0d12">
+      <h2 style="color:#ff4d6d">INVISIBLE COUPLING</h2>
+      <p class="lead">No shared code — but these repositories share live
+      configuration with ${repo}.</p>`;
+    invis.forEach(c=>{
+      const other=c.a===repo?c.b:c.a;
+      h+=`<div class="kv"><span class="k">${other}</span><span class="v">${c.count} shared</span></div>`;
+      h+=`<div class="w">${c.identifiers.slice(0,10).join(", ")}</div>`;
+      c.witnesses.slice(0,3).forEach(w=>{
+        if(w.at) h+=`<div class="w"><b>${w.identifier}</b> · ${w.at.file}:${w.at.line}</div>`;
+      });
+    });
+    h+=`</div>`;
+  }
+  const fk=(D.forks||[]).filter(f=>f.a===repo||f.b===repo);
+  if(fk.length){
+    h+=`<div class="card" style="border-color:${GOLD};background:#191408">
+      <h2 style="color:${GOLD}">SHARED CONTENT</h2>
+      <p class="lead">Byte-identical files live in both places. The copies will drift.</p>`;
+    fk.forEach(f=>{
+      const other=f.a===repo?f.b:f.a;
+      h+=`<div class="kv"><span class="k">${other}</span>
+          <span class="v">${f.identical_files} identical · ${f.pct_of_smaller_repo}% · ${f.verdict}</span></div>`;
+      f.witnesses.slice(0,4).forEach(w=>{
+        h+=`<div class="w"><b>${w.suffix}</b> · here ${f.a===repo?w.a_path:w.b_path}</div>`;
+      });
+    });
+    h+=`</div>`;
+  }
+  const rk=((D.risk&&D.risk.register)||[]).filter(r=>r.repos.includes(repo)).slice(0,6);
+  if(rk.length){
+    h+=`<div class="card"><h2>RISK REGISTER</h2>`;
+    rk.forEach(r=>{
+      h+=`<div class="kv"><span class="k" style="color:${SEV[r.severity]}">${r.severity}</span>
+          <span class="v">${r.kind}</span></div>
+          <div class="w">${r.summary}</div>`;
+    });
+    h+=`</div>`;
+  }
+  if(seams.length){
+    h+=`<div class="card"><h2>SEAMS — EVERY CLAIM CARRIES ITS WITNESS</h2>`;
+    seams.forEach(s=>{
+      h+=`<div class="kv"><span class="k">${s.from===repo?"→":"←"} ${s.from===repo?s.to:s.from}</span>
+          <span class="v">${s.sites} site${s.sites>1?"s":""}</span></div>`;
+      s.symbols.forEach(c=>{
+        const d=c.defined_in[0];
+        h+=`<div class="w"><b>${c.symbol}</b> · imported ${c.imported_at.file}:${c.imported_at.line}
+            · defined ${d?d.file+":"+d.line:"<span style='color:#ff5c5c'>nowhere</span>"}</div>`;
+      });
+    });
+    h+=`</div>`;
+  }
+  if(!peek) document.getElementById("detail").innerHTML=h;
+  else document.getElementById("detail").innerHTML=h;
+}
+function panel(){
+  const m=D.measured;
+  mRepos.textContent=m.repos_total;
+  mSeams.textContent=m.seam_count;
+  mSym.textContent=m.symbols_crossing;
+  mCert.textContent=m.certificates;
+  mInvis.textContent=new Set((D.invisible_coupling||[]).flatMap(c=>[c.a,c.b])).size;
+  mForks.textContent=(D.forks||[]).filter(f=>f.verdict==="fork").length;
+  mCrit.textContent=(D.risk&&D.risk.counts&&D.risk.counts.critical)||0;
+  mFiles.textContent=Object.values(D.repos).reduce((a,r)=>a+r.files,0).toLocaleString();
+}
+window.addEventListener("resize",()=>{draw();});
+</script>
+</body>
+</html>

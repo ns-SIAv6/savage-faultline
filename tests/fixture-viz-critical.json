@@ -1,0 +1,1876 @@
+{
+ "ambiguous_names": {
+  "common": [
+   "alpha-service",
+   "beta-engine"
+  ],
+  "rho": [
+   "rho-app",
+   "upsilon-fork"
+  ],
+  "shared": [
+   "omicron-two",
+   "xi-one"
+  ]
+ },
+ "blast_radius": {
+  "alpha-service": {
+   "count": 0,
+   "direct": [],
+   "transitive": []
+  },
+  "beta-engine": {
+   "count": 1,
+   "direct": [
+    "alpha-service"
+   ],
+   "transitive": [
+    "alpha-service"
+   ]
+  },
+  "delta-tools": {
+   "count": 0,
+   "direct": [],
+   "transitive": []
+  },
+  "epsilon-a": {
+   "count": 1,
+   "direct": [
+    "epsilon-b"
+   ],
+   "transitive": [
+    "epsilon-b"
+   ]
+  },
+  "epsilon-b": {
+   "count": 1,
+   "direct": [
+    "epsilon-a"
+   ],
+   "transitive": [
+    "epsilon-a"
+   ]
+  },
+  "gamma-lib": {
+   "count": 2,
+   "direct": [
+    "mu-web",
+    "tau-mono"
+   ],
+   "transitive": [
+    "mu-web",
+    "tau-mono"
+   ]
+  },
+  "iota-lib": {
+   "count": 0,
+   "direct": [],
+   "transitive": []
+  },
+  "kappa-app": {
+   "count": 0,
+   "direct": [],
+   "transitive": []
+  },
+  "lambda-web": {
+   "count": 0,
+   "direct": [],
+   "transitive": []
+  },
+  "mu-web": {
+   "count": 0,
+   "direct": [],
+   "transitive": []
+  },
+  "nu-empty": {
+   "count": 0,
+   "direct": [],
+   "transitive": []
+  },
+  "omicron-two": {
+   "count": 0,
+   "direct": [],
+   "transitive": []
+  },
+  "pi-three": {
+   "count": 0,
+   "direct": [],
+   "transitive": []
+  },
+  "rho-app": {
+   "count": 0,
+   "direct": [],
+   "transitive": []
+  },
+  "sigma-socket": {
+   "count": 0,
+   "direct": [],
+   "transitive": []
+  },
+  "tau-mono": {
+   "count": 0,
+   "direct": [],
+   "transitive": []
+  },
+  "upsilon-fork": {
+   "count": 0,
+   "direct": [],
+   "transitive": []
+  },
+  "xi-one": {
+   "count": 0,
+   "direct": [],
+   "transitive": []
+  },
+  "zeta-one": {
+   "count": 2,
+   "direct": [
+    "zeta-three"
+   ],
+   "transitive": [
+    "zeta-three",
+    "zeta-two"
+   ]
+  },
+  "zeta-three": {
+   "count": 2,
+   "direct": [
+    "zeta-two"
+   ],
+   "transitive": [
+    "zeta-one",
+    "zeta-two"
+   ]
+  },
+  "zeta-two": {
+   "count": 2,
+   "direct": [
+    "zeta-one"
+   ],
+   "transitive": [
+    "zeta-one",
+    "zeta-three"
+   ]
+  }
+ },
+ "certificate_denied": [
+  {
+   "reason": "the operational check could not run (no coupling data was supplied), so independence cannot be asserted",
+   "repo": "alpha-service"
+  },
+  {
+   "reason": "the operational check could not run (no coupling data was supplied), so independence cannot be asserted",
+   "repo": "beta-engine"
+  },
+  {
+   "reason": "the operational check could not run (no coupling data was supplied), so independence cannot be asserted",
+   "repo": "delta-tools"
+  },
+  {
+   "reason": "the operational check could not run (no coupling data was supplied), so independence cannot be asserted",
+   "repo": "epsilon-a"
+  },
+  {
+   "reason": "the operational check could not run (no coupling data was supplied), so independence cannot be asserted",
+   "repo": "epsilon-b"
+  },
+  {
+   "reason": "the operational check could not run (no coupling data was supplied), so independence cannot be asserted",
+   "repo": "gamma-lib"
+  },
+  {
+   "reason": "the operational check could not run (no coupling data was supplied), so independence cannot be asserted",
+   "repo": "iota-lib"
+  },
+  {
+   "reason": "the operational check could not run (no coupling data was supplied), so independence cannot be asserted",
+   "repo": "kappa-app"
+  },
+  {
+   "reason": "the operational check could not run (no coupling data was supplied), so independence cannot be asserted",
+   "repo": "lambda-web"
+  },
+  {
+   "reason": "the operational check could not run (no coupling data was supplied), so independence cannot be asserted",
+   "repo": "mu-web"
+  },
+  {
+   "reason": "the operational check could not run (no coupling data was supplied), so independence cannot be asserted",
+   "repo": "nu-empty"
+  },
+  {
+   "reason": "the operational check could not run (no coupling data was supplied), so independence cannot be asserted",
+   "repo": "omicron-two"
+  },
+  {
+   "reason": "the operational check could not run (no coupling data was supplied), so independence cannot be asserted",
+   "repo": "pi-three"
+  },
+  {
+   "reason": "the operational check could not run (no coupling data was supplied), so independence cannot be asserted",
+   "repo": "rho-app"
+  },
+  {
+   "reason": "the operational check could not run (no coupling data was supplied), so independence cannot be asserted",
+   "repo": "sigma-socket"
+  },
+  {
+   "reason": "the operational check could not run (no coupling data was supplied), so independence cannot be asserted",
+   "repo": "tau-mono"
+  },
+  {
+   "reason": "the operational check could not run (no coupling data was supplied), so independence cannot be asserted",
+   "repo": "upsilon-fork"
+  },
+  {
+   "reason": "the operational check could not run (no coupling data was supplied), so independence cannot be asserted",
+   "repo": "xi-one"
+  },
+  {
+   "reason": "the operational check could not run (no coupling data was supplied), so independence cannot be asserted",
+   "repo": "zeta-one"
+  },
+  {
+   "reason": "the operational check could not run (no coupling data was supplied), so independence cannot be asserted",
+   "repo": "zeta-three"
+  },
+  {
+   "reason": "the operational check could not run (no coupling data was supplied), so independence cannot be asserted",
+   "repo": "zeta-two"
+  }
+ ],
+ "certificates": [],
+ "emergent": [
+  {
+   "because": "a cycle has no member that can observe it \u2014 each repo sees one edge of the loop",
+   "claim": "2 cyclic cluster(s): cyclic coupling across 2 repositories: epsilon-a -> epsilon-b -> epsilon-a; cyclic coupling across 3 repositories: zeta-one -> zeta-three -> zeta-two -> zeta-one",
+   "evidence": {
+    "cycles": 2
+   },
+   "kind": "topology"
+  },
+  {
+   "because": "each repo's manifest is visible from inside; the overlap of two manifests is not",
+   "claim": "`lambda-web` and `mu-web` independently built on the same rare stack (zustand) yet share nothing \u2014 hypothesis, not finding",
+   "evidence": {
+    "score": 2.3514,
+    "shared_rare": [
+     "zustand"
+    ]
+   },
+   "kind": "convergence"
+  },
+  {
+   "because": "a repo cannot know which of its exports are read elsewhere; the consumers cannot know what else it offers",
+   "claim": "the ecosystem reads 1 of 2 public symbol(s) `beta-engine` offers \u2014 `beta-engine`'s unread surface is the rest",
+   "evidence": {
+    "offered": [
+     "Other",
+     "Runner"
+    ],
+    "read": [
+     "Runner"
+    ],
+    "repo": "beta-engine"
+   },
+   "kind": "surface"
+  },
+  {
+   "because": "a repo cannot know which of its exports are read elsewhere; the consumers cannot know what else it offers",
+   "claim": "the ecosystem reads 1 of 1 public symbol(s) `epsilon-a` offers",
+   "evidence": {
+    "offered": [
+     "AThing"
+    ],
+    "read": [
+     "AThing"
+    ],
+    "repo": "epsilon-a"
+   },
+   "kind": "surface"
+  },
+  {
+   "because": "a repo cannot know which of its exports are read elsewhere; the consumers cannot know what else it offers",
+   "claim": "the ecosystem reads 1 of 1 public symbol(s) `epsilon-b` offers",
+   "evidence": {
+    "offered": [
+     "BThing"
+    ],
+    "read": [
+     "BThing"
+    ],
+    "repo": "epsilon-b"
+   },
+   "kind": "surface"
+  },
+  {
+   "because": "a repo cannot know which of its exports are read elsewhere; the consumers cannot know what else it offers",
+   "claim": "the ecosystem reads 1 of 2 public symbol(s) `gamma-lib` offers \u2014 `gamma-lib`'s unread surface is the rest",
+   "evidence": {
+    "offered": [
+     "helper",
+     "unusedHelper"
+    ],
+    "read": [
+     "helper"
+    ],
+    "repo": "gamma-lib"
+   },
+   "kind": "surface"
+  },
+  {
+   "because": "a repo cannot know which of its exports are read elsewhere; the consumers cannot know what else it offers",
+   "claim": "the ecosystem reads 1 of 1 public symbol(s) `zeta-one` offers",
+   "evidence": {
+    "offered": [
+     "A1"
+    ],
+    "read": [
+     "A1"
+    ],
+    "repo": "zeta-one"
+   },
+   "kind": "surface"
+  },
+  {
+   "because": "a repo cannot know which of its exports are read elsewhere; the consumers cannot know what else it offers",
+   "claim": "the ecosystem reads 1 of 1 public symbol(s) `zeta-three` offers",
+   "evidence": {
+    "offered": [
+     "C3"
+    ],
+    "read": [
+     "C3"
+    ],
+    "repo": "zeta-three"
+   },
+   "kind": "surface"
+  },
+  {
+   "because": "a repo cannot know which of its exports are read elsewhere; the consumers cannot know what else it offers",
+   "claim": "the ecosystem reads 1 of 1 public symbol(s) `zeta-two` offers",
+   "evidence": {
+    "offered": [
+     "B2"
+    ],
+    "read": [
+     "B2"
+    ],
+    "repo": "zeta-two"
+   },
+   "kind": "surface"
+  }
+ ],
+ "findings": [
+  {
+   "kind": "UNDECLARED_DEPENDENCY",
+   "severity": "high",
+   "summary": "alpha-service imports beta-engine at 2 site(s) but declares no dependency on it",
+   "witnesses": [
+    {
+     "file": "src/alpha/core.py",
+     "line": 1,
+     "repo": "alpha-service",
+     "statement": "beta.engine"
+    },
+    {
+     "file": "src/alpha/core.py",
+     "line": 2,
+     "repo": "alpha-service",
+     "statement": "beta.ghost"
+    },
+    {
+     "repo": "alpha-service",
+     "statement": "declared: []"
+    }
+   ]
+  },
+  {
+   "kind": "UNRESOLVED_INTERFACE",
+   "severity": "high",
+   "summary": "alpha-service imports 'beta.ghost' from beta-engine, but beta-engine defines no such module",
+   "witnesses": [
+    {
+     "file": "src/alpha/core.py",
+     "line": 2,
+     "repo": "alpha-service",
+     "statement": "import beta.ghost"
+    },
+    {
+     "repo": "beta-engine",
+     "statement": "defines ['beta', 'beta.engine', 'common', 'common.util']"
+    }
+   ]
+  },
+  {
+   "kind": "DECLARATION_MISMATCH",
+   "severity": "high",
+   "summary": "beta-engine declares a dependency on gamma-lib at github.com/WRONG-ORG/, but it is actually hosted at github.com/example-org/",
+   "witnesses": [
+    {
+     "repo": "beta-engine",
+     "statement": "gamma-lib @ git+https://github.com/WRONG-ORG/gamma-lib.git@main"
+    },
+    {
+     "repo": "example-org",
+     "statement": "actual owner of gamma-lib"
+    }
+   ]
+  },
+  {
+   "kind": "AMBIGUOUS_NAME",
+   "severity": "medium",
+   "summary": "pi-three imports 'shared.util', but shared is published by 2 repositories (omicron-two, xi-one) \u2014 which one is meant cannot be determined, so no seam is claimed",
+   "witnesses": [
+    {
+     "file": "src/pi/app.py",
+     "line": 1,
+     "repo": "pi-three",
+     "statement": "import shared.util"
+    },
+    {
+     "repo": "omicron-two",
+     "statement": "publishes shared"
+    },
+    {
+     "repo": "xi-one",
+     "statement": "publishes shared"
+    }
+   ]
+  },
+  {
+   "kind": "NO_CONSUMERS",
+   "severity": "medium",
+   "summary": "nothing in the ecosystem imports from alpha-service",
+   "witnesses": [
+    {
+     "repo": "alpha-service",
+     "statement": "no incoming cross-repo imports"
+    }
+   ]
+  },
+  {
+   "kind": "NO_CONSUMERS",
+   "severity": "medium",
+   "summary": "nothing in the ecosystem imports from delta-tools",
+   "witnesses": [
+    {
+     "repo": "delta-tools",
+     "statement": "no incoming cross-repo imports"
+    }
+   ]
+  },
+  {
+   "kind": "NO_CONSUMERS",
+   "severity": "medium",
+   "summary": "nothing in the ecosystem imports from iota-lib",
+   "witnesses": [
+    {
+     "repo": "iota-lib",
+     "statement": "no incoming cross-repo imports"
+    }
+   ]
+  },
+  {
+   "kind": "NO_CONSUMERS",
+   "severity": "medium",
+   "summary": "nothing in the ecosystem imports from kappa-app",
+   "witnesses": [
+    {
+     "repo": "kappa-app",
+     "statement": "no incoming cross-repo imports"
+    }
+   ]
+  },
+  {
+   "kind": "NO_CONSUMERS",
+   "severity": "medium",
+   "summary": "nothing in the ecosystem imports from lambda-web",
+   "witnesses": [
+    {
+     "repo": "lambda-web",
+     "statement": "no incoming cross-repo imports"
+    }
+   ]
+  },
+  {
+   "kind": "NO_CONSUMERS",
+   "severity": "medium",
+   "summary": "nothing in the ecosystem imports from mu-web",
+   "witnesses": [
+    {
+     "repo": "mu-web",
+     "statement": "no incoming cross-repo imports"
+    }
+   ]
+  },
+  {
+   "kind": "NO_CONSUMERS",
+   "severity": "medium",
+   "summary": "nothing in the ecosystem imports from nu-empty",
+   "witnesses": [
+    {
+     "repo": "nu-empty",
+     "statement": "no incoming cross-repo imports"
+    }
+   ]
+  },
+  {
+   "kind": "NO_CONSUMERS",
+   "severity": "medium",
+   "summary": "nothing in the ecosystem imports from omicron-two",
+   "witnesses": [
+    {
+     "repo": "omicron-two",
+     "statement": "no incoming cross-repo imports"
+    }
+   ]
+  },
+  {
+   "kind": "NO_CONSUMERS",
+   "severity": "medium",
+   "summary": "nothing in the ecosystem imports from pi-three",
+   "witnesses": [
+    {
+     "repo": "pi-three",
+     "statement": "no incoming cross-repo imports"
+    }
+   ]
+  },
+  {
+   "kind": "NO_CONSUMERS",
+   "severity": "medium",
+   "summary": "nothing in the ecosystem imports from rho-app",
+   "witnesses": [
+    {
+     "repo": "rho-app",
+     "statement": "no incoming cross-repo imports"
+    }
+   ]
+  },
+  {
+   "kind": "NO_CONSUMERS",
+   "severity": "medium",
+   "summary": "nothing in the ecosystem imports from sigma-socket",
+   "witnesses": [
+    {
+     "repo": "sigma-socket",
+     "statement": "no incoming cross-repo imports"
+    }
+   ]
+  },
+  {
+   "kind": "NO_CONSUMERS",
+   "severity": "medium",
+   "summary": "nothing in the ecosystem imports from tau-mono",
+   "witnesses": [
+    {
+     "repo": "tau-mono",
+     "statement": "no incoming cross-repo imports"
+    }
+   ]
+  },
+  {
+   "kind": "NO_CONSUMERS",
+   "severity": "medium",
+   "summary": "nothing in the ecosystem imports from upsilon-fork",
+   "witnesses": [
+    {
+     "repo": "upsilon-fork",
+     "statement": "no incoming cross-repo imports"
+    }
+   ]
+  },
+  {
+   "kind": "NO_CONSUMERS",
+   "severity": "medium",
+   "summary": "nothing in the ecosystem imports from xi-one",
+   "witnesses": [
+    {
+     "repo": "xi-one",
+     "statement": "no incoming cross-repo imports"
+    }
+   ]
+  },
+  {
+   "kind": "CYCLE",
+   "severity": "medium",
+   "summary": "cyclic coupling across 2 repositories: epsilon-a -> epsilon-b -> epsilon-a",
+   "witnesses": [
+    {
+     "file": "src/epsilon_a/a.py",
+     "line": 1,
+     "repo": "epsilon-a",
+     "statement": "epsilon-a -> epsilon-b"
+    },
+    {
+     "file": "src/epsilon_b/b.py",
+     "line": 1,
+     "repo": "epsilon-b",
+     "statement": "epsilon-b -> epsilon-a"
+    }
+   ]
+  },
+  {
+   "kind": "CYCLE",
+   "severity": "medium",
+   "summary": "cyclic coupling across 3 repositories: zeta-one -> zeta-three -> zeta-two -> zeta-one",
+   "witnesses": [
+    {
+     "file": "src/zeta_one/a.py",
+     "line": 1,
+     "repo": "zeta-one",
+     "statement": "zeta-one -> zeta-two"
+    },
+    {
+     "file": "src/zeta_three/c.py",
+     "line": 1,
+     "repo": "zeta-three",
+     "statement": "zeta-three -> zeta-one"
+    },
+    {
+     "file": "src/zeta_two/b.py",
+     "line": 1,
+     "repo": "zeta-two",
+     "statement": "zeta-two -> zeta-three"
+    }
+   ]
+  }
+ ],
+ "forks": [],
+ "headline": {
+  "cross_repo_edges": 8,
+  "distinct_symbols_crossing": 8,
+  "external_packages": 4,
+  "import_sites": 9,
+  "repos_analyzed": 21,
+  "repos_connected": 10,
+  "repos_orphaned": 11
+ },
+ "invisible_coupling": [],
+ "measured": {
+  "certificate_denied": 21,
+  "certificates": 0,
+  "emergent_claims": 9,
+  "fork_pairs": 0,
+  "import_sites": 9,
+  "invisible_coupling_pairs": 0,
+  "repos_total": 21,
+  "repos_with_dependents": 7,
+  "repos_with_seams": 10,
+  "risk_counts": {
+   "high": 4,
+   "low": 14,
+   "medium": 2
+  },
+  "seam_count": 8,
+  "similar_pairs": 1,
+  "symbols_crossing": 8,
+  "symbols_resolved": 7
+ },
+ "orphans": [
+  "delta-tools",
+  "iota-lib",
+  "kappa-app",
+  "lambda-web",
+  "nu-empty",
+  "omicron-two",
+  "pi-three",
+  "rho-app",
+  "sigma-socket",
+  "upsilon-fork",
+  "xi-one"
+ ],
+ "posture": {
+  "alpha-service": {
+   "code_in": 0,
+   "code_out": 1,
+   "declared_in": 0,
+   "declared_out": 0,
+   "regime": "clandestine"
+  },
+  "beta-engine": {
+   "code_in": 1,
+   "code_out": 0,
+   "declared_in": 0,
+   "declared_out": 1,
+   "regime": "phantom"
+  },
+  "delta-tools": {
+   "code_in": 0,
+   "code_out": 0,
+   "declared_in": 0,
+   "declared_out": 0,
+   "regime": "isolated"
+  },
+  "epsilon-a": {
+   "code_in": 1,
+   "code_out": 1,
+   "declared_in": 1,
+   "declared_out": 1,
+   "regime": "interdependent"
+  },
+  "epsilon-b": {
+   "code_in": 1,
+   "code_out": 1,
+   "declared_in": 1,
+   "declared_out": 1,
+   "regime": "interdependent"
+  },
+  "gamma-lib": {
+   "code_in": 2,
+   "code_out": 0,
+   "declared_in": 3,
+   "declared_out": 0,
+   "regime": "library"
+  },
+  "iota-lib": {
+   "code_in": 0,
+   "code_out": 0,
+   "declared_in": 0,
+   "declared_out": 0,
+   "regime": "isolated"
+  },
+  "kappa-app": {
+   "code_in": 0,
+   "code_out": 0,
+   "declared_in": 0,
+   "declared_out": 0,
+   "regime": "isolated"
+  },
+  "lambda-web": {
+   "code_in": 0,
+   "code_out": 0,
+   "declared_in": 0,
+   "declared_out": 0,
+   "regime": "isolated"
+  },
+  "mu-web": {
+   "code_in": 0,
+   "code_out": 1,
+   "declared_in": 0,
+   "declared_out": 1,
+   "regime": "balanced"
+  },
+  "nu-empty": {
+   "code_in": 0,
+   "code_out": 0,
+   "declared_in": 0,
+   "declared_out": 0,
+   "regime": "isolated"
+  },
+  "omicron-two": {
+   "code_in": 0,
+   "code_out": 0,
+   "declared_in": 0,
+   "declared_out": 0,
+   "regime": "isolated"
+  },
+  "pi-three": {
+   "code_in": 0,
+   "code_out": 0,
+   "declared_in": 0,
+   "declared_out": 0,
+   "regime": "isolated"
+  },
+  "rho-app": {
+   "code_in": 0,
+   "code_out": 0,
+   "declared_in": 0,
+   "declared_out": 0,
+   "regime": "isolated"
+  },
+  "sigma-socket": {
+   "code_in": 0,
+   "code_out": 0,
+   "declared_in": 0,
+   "declared_out": 0,
+   "regime": "isolated"
+  },
+  "tau-mono": {
+   "code_in": 0,
+   "code_out": 1,
+   "declared_in": 0,
+   "declared_out": 1,
+   "regime": "balanced"
+  },
+  "upsilon-fork": {
+   "code_in": 0,
+   "code_out": 0,
+   "declared_in": 0,
+   "declared_out": 0,
+   "regime": "isolated"
+  },
+  "xi-one": {
+   "code_in": 0,
+   "code_out": 0,
+   "declared_in": 0,
+   "declared_out": 0,
+   "regime": "isolated"
+  },
+  "zeta-one": {
+   "code_in": 1,
+   "code_out": 1,
+   "declared_in": 1,
+   "declared_out": 1,
+   "regime": "interdependent"
+  },
+  "zeta-three": {
+   "code_in": 1,
+   "code_out": 1,
+   "declared_in": 1,
+   "declared_out": 1,
+   "regime": "interdependent"
+  },
+  "zeta-two": {
+   "code_in": 1,
+   "code_out": 1,
+   "declared_in": 1,
+   "declared_out": 1,
+   "regime": "interdependent"
+  }
+ },
+ "repos": {
+  "alpha-service": {
+   "declared_dependencies": [],
+   "external_package_count": 0,
+   "files": 5,
+   "languages": {
+    "python": 4
+   },
+   "loc": 9,
+   "name": "alpha-service",
+   "package_name": "alpha-service",
+   "submodules": []
+  },
+  "beta-engine": {
+   "declared_dependencies": [
+    "gamma-lib @ git+https://github.com/WRONG-ORG/gamma-lib.git@main"
+   ],
+   "external_package_count": 0,
+   "files": 5,
+   "languages": {
+    "python": 4
+   },
+   "loc": 8,
+   "name": "beta-engine",
+   "package_name": "beta-engine",
+   "submodules": []
+  },
+  "delta-tools": {
+   "declared_dependencies": [
+    "okhttp"
+   ],
+   "external_package_count": 1,
+   "files": 7,
+   "languages": {
+    "kotlin": 1,
+    "python": 3
+   },
+   "loc": 7,
+   "name": "delta-tools",
+   "package_name": "delta-tools",
+   "submodules": []
+  },
+  "epsilon-a": {
+   "declared_dependencies": [
+    "epsilon-b"
+   ],
+   "external_package_count": 0,
+   "files": 3,
+   "languages": {
+    "python": 2
+   },
+   "loc": 5,
+   "name": "epsilon-a",
+   "package_name": "epsilon-a",
+   "submodules": []
+  },
+  "epsilon-b": {
+   "declared_dependencies": [
+    "epsilon-a"
+   ],
+   "external_package_count": 0,
+   "files": 3,
+   "languages": {
+    "python": 2
+   },
+   "loc": 5,
+   "name": "epsilon-b",
+   "package_name": "epsilon-b",
+   "submodules": []
+  },
+  "gamma-lib": {
+   "declared_dependencies": [],
+   "external_package_count": 0,
+   "files": 2,
+   "languages": {
+    "javascript": 1
+   },
+   "loc": 2,
+   "name": "gamma-lib",
+   "package_name": "gamma-lib",
+   "submodules": []
+  },
+  "iota-lib": {
+   "declared_dependencies": [],
+   "external_package_count": 0,
+   "files": 2,
+   "languages": {
+    "python": 1
+   },
+   "loc": 2,
+   "name": "iota-lib",
+   "package_name": "iota-lib",
+   "submodules": []
+  },
+  "kappa-app": {
+   "declared_dependencies": [],
+   "external_package_count": 0,
+   "files": 3,
+   "languages": {
+    "python": 2
+   },
+   "loc": 8,
+   "name": "kappa-app",
+   "package_name": "kappa-app",
+   "submodules": []
+  },
+  "lambda-web": {
+   "declared_dependencies": [],
+   "external_package_count": 1,
+   "files": 3,
+   "languages": {
+    "typescript": 2
+   },
+   "loc": 3,
+   "name": "lambda-web",
+   "package_name": "lambda-web",
+   "submodules": []
+  },
+  "mu-web": {
+   "declared_dependencies": [
+    "gamma-lib"
+   ],
+   "external_package_count": 3,
+   "files": 2,
+   "languages": {
+    "typescript": 1
+   },
+   "loc": 11,
+   "name": "mu-web",
+   "package_name": "mu-web",
+   "submodules": []
+  },
+  "nu-empty": {
+   "declared_dependencies": [],
+   "external_package_count": 0,
+   "files": 2,
+   "languages": {},
+   "loc": 0,
+   "name": "nu-empty",
+   "package_name": null,
+   "submodules": [
+    {
+     "name": "delta-tools",
+     "path": "delta-tools",
+     "url": "https://github.com/example-org/delta-tools.git"
+    }
+   ]
+  },
+  "omicron-two": {
+   "declared_dependencies": [],
+   "external_package_count": 0,
+   "files": 3,
+   "languages": {
+    "python": 2
+   },
+   "loc": 2,
+   "name": "omicron-two",
+   "package_name": "omicron-two",
+   "submodules": []
+  },
+  "pi-three": {
+   "declared_dependencies": [],
+   "external_package_count": 0,
+   "files": 3,
+   "languages": {
+    "python": 2
+   },
+   "loc": 1,
+   "name": "pi-three",
+   "package_name": "pi-three",
+   "submodules": []
+  },
+  "rho-app": {
+   "declared_dependencies": [],
+   "external_package_count": 0,
+   "files": 5,
+   "languages": {
+    "python": 4
+   },
+   "loc": 25,
+   "name": "rho-app",
+   "package_name": "rho-app",
+   "submodules": []
+  },
+  "sigma-socket": {
+   "declared_dependencies": [],
+   "external_package_count": 0,
+   "files": 3,
+   "languages": {
+    "javascript": 1
+   },
+   "loc": 1,
+   "name": "sigma-socket",
+   "package_name": "socket",
+   "submodules": []
+  },
+  "tau-mono": {
+   "declared_dependencies": [
+    "gamma-lib"
+   ],
+   "external_package_count": 0,
+   "files": 4,
+   "languages": {
+    "javascript": 1
+   },
+   "loc": 2,
+   "name": "tau-mono",
+   "package_name": "@tau/web",
+   "submodules": []
+  },
+  "upsilon-fork": {
+   "declared_dependencies": [],
+   "external_package_count": 0,
+   "files": 6,
+   "languages": {
+    "python": 5
+   },
+   "loc": 28,
+   "name": "upsilon-fork",
+   "package_name": "upsilon-fork",
+   "submodules": []
+  },
+  "xi-one": {
+   "declared_dependencies": [],
+   "external_package_count": 0,
+   "files": 3,
+   "languages": {
+    "python": 2
+   },
+   "loc": 2,
+   "name": "xi-one",
+   "package_name": "xi-one",
+   "submodules": []
+  },
+  "zeta-one": {
+   "declared_dependencies": [
+    "zeta-two"
+   ],
+   "external_package_count": 0,
+   "files": 3,
+   "languages": {
+    "python": 2
+   },
+   "loc": 5,
+   "name": "zeta-one",
+   "package_name": "zeta-one",
+   "submodules": []
+  },
+  "zeta-three": {
+   "declared_dependencies": [
+    "zeta-one"
+   ],
+   "external_package_count": 0,
+   "files": 3,
+   "languages": {
+    "python": 2
+   },
+   "loc": 5,
+   "name": "zeta-three",
+   "package_name": "zeta-three",
+   "submodules": []
+  },
+  "zeta-two": {
+   "declared_dependencies": [
+    "zeta-three"
+   ],
+   "external_package_count": 0,
+   "files": 3,
+   "languages": {
+    "python": 2
+   },
+   "loc": 5,
+   "name": "zeta-two",
+   "package_name": "zeta-two",
+   "submodules": []
+  }
+ },
+ "risk": {
+  "counts": {
+   "high": 4,
+   "low": 14,
+   "medium": 2
+  },
+  "exposure": {
+   "alpha-service": 11,
+   "beta-engine": 7,
+   "delta-tools": 1,
+   "epsilon-a": 5,
+   "epsilon-b": 5,
+   "example-org": 2,
+   "iota-lib": 1,
+   "kappa-app": 1,
+   "lambda-web": 1,
+   "mu-web": 1,
+   "nu-empty": 1,
+   "omicron-two": 3,
+   "pi-three": 3,
+   "rho-app": 1,
+   "sigma-socket": 1,
+   "tau-mono": 1,
+   "upsilon-fork": 1,
+   "xi-one": 3,
+   "zeta-one": 5,
+   "zeta-three": 5,
+   "zeta-two": 5
+  },
+  "register": [
+   {
+    "consequence": "neither side can be built, tested, or archived independently",
+    "kind": "CYCLE",
+    "repos": [
+     "epsilon-a",
+     "epsilon-b"
+    ],
+    "severity": "high",
+    "summary": "cyclic coupling across 2 repositories: epsilon-a -> epsilon-b -> epsilon-a",
+    "witnesses": [
+     {
+      "file": "src/epsilon_a/a.py",
+      "line": 1,
+      "repo": "epsilon-a",
+      "statement": "epsilon-a -> epsilon-b"
+     },
+     {
+      "file": "src/epsilon_b/b.py",
+      "line": 1,
+      "repo": "epsilon-b",
+      "statement": "epsilon-b -> epsilon-a"
+     }
+    ]
+   },
+   {
+    "consequence": "neither side can be built, tested, or archived independently",
+    "kind": "CYCLE",
+    "repos": [
+     "zeta-one",
+     "zeta-three",
+     "zeta-two"
+    ],
+    "severity": "high",
+    "summary": "cyclic coupling across 3 repositories: zeta-one -> zeta-three -> zeta-two -> zeta-one",
+    "witnesses": [
+     {
+      "file": "src/zeta_one/a.py",
+      "line": 1,
+      "repo": "zeta-one",
+      "statement": "zeta-one -> zeta-two"
+     },
+     {
+      "file": "src/zeta_three/c.py",
+      "line": 1,
+      "repo": "zeta-three",
+      "statement": "zeta-three -> zeta-one"
+     },
+     {
+      "file": "src/zeta_two/b.py",
+      "line": 1,
+      "repo": "zeta-two",
+      "statement": "zeta-two -> zeta-three"
+     }
+    ]
+   },
+   {
+    "consequence": "the dependency is invisible to installers and auditors; removing the target looks safe",
+    "kind": "UNDECLARED_DEPENDENCY",
+    "repos": [
+     "alpha-service"
+    ],
+    "severity": "high",
+    "summary": "alpha-service imports beta-engine at 2 site(s) but declares no dependency on it",
+    "witnesses": [
+     {
+      "file": "src/alpha/core.py",
+      "line": 1,
+      "repo": "alpha-service",
+      "statement": "beta.engine"
+     },
+     {
+      "file": "src/alpha/core.py",
+      "line": 2,
+      "repo": "alpha-service",
+      "statement": "beta.ghost"
+     },
+     {
+      "repo": "alpha-service",
+      "statement": "declared: []"
+     }
+    ]
+   },
+   {
+    "consequence": "the import fails at runtime against the target as it actually exists",
+    "kind": "UNRESOLVED_INTERFACE",
+    "repos": [
+     "alpha-service",
+     "beta-engine"
+    ],
+    "severity": "high",
+    "summary": "alpha-service imports 'beta.ghost' from beta-engine, but beta-engine defines no such module",
+    "witnesses": [
+     {
+      "file": "src/alpha/core.py",
+      "line": 2,
+      "repo": "alpha-service",
+      "statement": "import beta.ghost"
+     },
+     {
+      "repo": "beta-engine",
+      "statement": "defines ['beta', 'beta.engine', 'common', 'common.util']"
+     }
+    ]
+   },
+   {
+    "consequence": "resolution depends on tool ordering, not intent",
+    "kind": "AMBIGUOUS_NAME",
+    "repos": [
+     "omicron-two",
+     "pi-three",
+     "xi-one"
+    ],
+    "severity": "medium",
+    "summary": "pi-three imports 'shared.util', but shared is published by 2 repositories (omicron-two, xi-one) \u2014 which one is meant cannot be determined, so no seam is claimed",
+    "witnesses": [
+     {
+      "file": "src/pi/app.py",
+      "line": 1,
+      "repo": "pi-three",
+      "statement": "import shared.util"
+     },
+     {
+      "repo": "omicron-two",
+      "statement": "publishes shared"
+     },
+     {
+      "repo": "xi-one",
+      "statement": "publishes shared"
+     }
+    ]
+   },
+   {
+    "consequence": "the manifest points at a stale owner; installs fetch from the wrong place or fail",
+    "kind": "DECLARATION_MISMATCH",
+    "repos": [
+     "beta-engine",
+     "example-org"
+    ],
+    "severity": "medium",
+    "summary": "beta-engine declares a dependency on gamma-lib at github.com/WRONG-ORG/, but it is actually hosted at github.com/example-org/",
+    "witnesses": [
+     {
+      "repo": "beta-engine",
+      "statement": "gamma-lib @ git+https://github.com/WRONG-ORG/gamma-lib.git@main"
+     },
+     {
+      "repo": "example-org",
+      "statement": "actual owner of gamma-lib"
+     }
+    ]
+   },
+   {
+    "consequence": "nothing uses it \u2014 a candidate for archival, if the certificate also holds",
+    "kind": "NO_CONSUMERS",
+    "repos": [
+     "alpha-service"
+    ],
+    "severity": "low",
+    "summary": "nothing in the ecosystem imports from alpha-service",
+    "witnesses": [
+     {
+      "repo": "alpha-service",
+      "statement": "no incoming cross-repo imports"
+     }
+    ]
+   },
+   {
+    "consequence": "nothing uses it \u2014 a candidate for archival, if the certificate also holds",
+    "kind": "NO_CONSUMERS",
+    "repos": [
+     "delta-tools"
+    ],
+    "severity": "low",
+    "summary": "nothing in the ecosystem imports from delta-tools",
+    "witnesses": [
+     {
+      "repo": "delta-tools",
+      "statement": "no incoming cross-repo imports"
+     }
+    ]
+   },
+   {
+    "consequence": "nothing uses it \u2014 a candidate for archival, if the certificate also holds",
+    "kind": "NO_CONSUMERS",
+    "repos": [
+     "iota-lib"
+    ],
+    "severity": "low",
+    "summary": "nothing in the ecosystem imports from iota-lib",
+    "witnesses": [
+     {
+      "repo": "iota-lib",
+      "statement": "no incoming cross-repo imports"
+     }
+    ]
+   },
+   {
+    "consequence": "nothing uses it \u2014 a candidate for archival, if the certificate also holds",
+    "kind": "NO_CONSUMERS",
+    "repos": [
+     "kappa-app"
+    ],
+    "severity": "low",
+    "summary": "nothing in the ecosystem imports from kappa-app",
+    "witnesses": [
+     {
+      "repo": "kappa-app",
+      "statement": "no incoming cross-repo imports"
+     }
+    ]
+   },
+   {
+    "consequence": "nothing uses it \u2014 a candidate for archival, if the certificate also holds",
+    "kind": "NO_CONSUMERS",
+    "repos": [
+     "lambda-web"
+    ],
+    "severity": "low",
+    "summary": "nothing in the ecosystem imports from lambda-web",
+    "witnesses": [
+     {
+      "repo": "lambda-web",
+      "statement": "no incoming cross-repo imports"
+     }
+    ]
+   },
+   {
+    "consequence": "nothing uses it \u2014 a candidate for archival, if the certificate also holds",
+    "kind": "NO_CONSUMERS",
+    "repos": [
+     "mu-web"
+    ],
+    "severity": "low",
+    "summary": "nothing in the ecosystem imports from mu-web",
+    "witnesses": [
+     {
+      "repo": "mu-web",
+      "statement": "no incoming cross-repo imports"
+     }
+    ]
+   },
+   {
+    "consequence": "nothing uses it \u2014 a candidate for archival, if the certificate also holds",
+    "kind": "NO_CONSUMERS",
+    "repos": [
+     "nu-empty"
+    ],
+    "severity": "low",
+    "summary": "nothing in the ecosystem imports from nu-empty",
+    "witnesses": [
+     {
+      "repo": "nu-empty",
+      "statement": "no incoming cross-repo imports"
+     }
+    ]
+   },
+   {
+    "consequence": "nothing uses it \u2014 a candidate for archival, if the certificate also holds",
+    "kind": "NO_CONSUMERS",
+    "repos": [
+     "omicron-two"
+    ],
+    "severity": "low",
+    "summary": "nothing in the ecosystem imports from omicron-two",
+    "witnesses": [
+     {
+      "repo": "omicron-two",
+      "statement": "no incoming cross-repo imports"
+     }
+    ]
+   },
+   {
+    "consequence": "nothing uses it \u2014 a candidate for archival, if the certificate also holds",
+    "kind": "NO_CONSUMERS",
+    "repos": [
+     "pi-three"
+    ],
+    "severity": "low",
+    "summary": "nothing in the ecosystem imports from pi-three",
+    "witnesses": [
+     {
+      "repo": "pi-three",
+      "statement": "no incoming cross-repo imports"
+     }
+    ]
+   },
+   {
+    "consequence": "nothing uses it \u2014 a candidate for archival, if the certificate also holds",
+    "kind": "NO_CONSUMERS",
+    "repos": [
+     "rho-app"
+    ],
+    "severity": "low",
+    "summary": "nothing in the ecosystem imports from rho-app",
+    "witnesses": [
+     {
+      "repo": "rho-app",
+      "statement": "no incoming cross-repo imports"
+     }
+    ]
+   },
+   {
+    "consequence": "nothing uses it \u2014 a candidate for archival, if the certificate also holds",
+    "kind": "NO_CONSUMERS",
+    "repos": [
+     "sigma-socket"
+    ],
+    "severity": "low",
+    "summary": "nothing in the ecosystem imports from sigma-socket",
+    "witnesses": [
+     {
+      "repo": "sigma-socket",
+      "statement": "no incoming cross-repo imports"
+     }
+    ]
+   },
+   {
+    "consequence": "nothing uses it \u2014 a candidate for archival, if the certificate also holds",
+    "kind": "NO_CONSUMERS",
+    "repos": [
+     "tau-mono"
+    ],
+    "severity": "low",
+    "summary": "nothing in the ecosystem imports from tau-mono",
+    "witnesses": [
+     {
+      "repo": "tau-mono",
+      "statement": "no incoming cross-repo imports"
+     }
+    ]
+   },
+   {
+    "consequence": "nothing uses it \u2014 a candidate for archival, if the certificate also holds",
+    "kind": "NO_CONSUMERS",
+    "repos": [
+     "upsilon-fork"
+    ],
+    "severity": "low",
+    "summary": "nothing in the ecosystem imports from upsilon-fork",
+    "witnesses": [
+     {
+      "repo": "upsilon-fork",
+      "statement": "no incoming cross-repo imports"
+     }
+    ]
+   },
+   {
+    "consequence": "nothing uses it \u2014 a candidate for archival, if the certificate also holds",
+    "kind": "NO_CONSUMERS",
+    "repos": [
+     "xi-one"
+    ],
+    "severity": "low",
+    "summary": "nothing in the ecosystem imports from xi-one",
+    "witnesses": [
+     {
+      "repo": "xi-one",
+      "statement": "no incoming cross-repo imports"
+     }
+    ]
+   }
+  ]
+ },
+ "seams": [
+  {
+   "from": "alpha-service",
+   "resolved_symbols": [
+    {
+     "defined_in": [
+      {
+       "file": "src/beta/engine.py",
+       "line": 4,
+       "module": "beta.engine"
+      }
+     ],
+     "imported_at": {
+      "file": "src/alpha/core.py",
+      "line": 1
+     },
+     "resolved_in_imported_module": true,
+     "symbol": "Runner",
+     "via": "beta.engine"
+    }
+   ],
+   "sites": 2,
+   "symbols": [
+    {
+     "defined_in": [
+      {
+       "file": "src/beta/engine.py",
+       "line": 4,
+       "module": "beta.engine"
+      }
+     ],
+     "imported_at": {
+      "file": "src/alpha/core.py",
+      "line": 1
+     },
+     "resolved_in_imported_module": true,
+     "symbol": "Runner",
+     "via": "beta.engine"
+    },
+    {
+     "defined_in": [],
+     "imported_at": {
+      "file": "src/alpha/core.py",
+      "line": 2
+     },
+     "resolved_in_imported_module": false,
+     "symbol": "MissingThing",
+     "via": "beta.ghost"
+    }
+   ],
+   "to": "beta-engine",
+   "unresolved_symbols": [
+    {
+     "defined_in": [],
+     "imported_at": {
+      "file": "src/alpha/core.py",
+      "line": 2
+     },
+     "resolved_in_imported_module": false,
+     "symbol": "MissingThing",
+     "via": "beta.ghost"
+    }
+   ]
+  },
+  {
+   "from": "epsilon-a",
+   "resolved_symbols": [
+    {
+     "defined_in": [
+      {
+       "file": "src/epsilon_b/b.py",
+       "line": 4,
+       "module": "epsilon_b.b"
+      }
+     ],
+     "imported_at": {
+      "file": "src/epsilon_a/a.py",
+      "line": 1
+     },
+     "resolved_in_imported_module": true,
+     "symbol": "BThing",
+     "via": "epsilon_b.b"
+    }
+   ],
+   "sites": 1,
+   "symbols": [
+    {
+     "defined_in": [
+      {
+       "file": "src/epsilon_b/b.py",
+       "line": 4,
+       "module": "epsilon_b.b"
+      }
+     ],
+     "imported_at": {
+      "file": "src/epsilon_a/a.py",
+      "line": 1
+     },
+     "resolved_in_imported_module": true,
+     "symbol": "BThing",
+     "via": "epsilon_b.b"
+    }
+   ],
+   "to": "epsilon-b",
+   "unresolved_symbols": []
+  },
+  {
+   "from": "epsilon-b",
+   "resolved_symbols": [
+    {
+     "defined_in": [
+      {
+       "file": "src/epsilon_a/a.py",
+       "line": 4,
+       "module": "epsilon_a.a"
+      }
+     ],
+     "imported_at": {
+      "file": "src/epsilon_b/b.py",
+      "line": 1
+     },
+     "resolved_in_imported_module": true,
+     "symbol": "AThing",
+     "via": "epsilon_a.a"
+    }
+   ],
+   "sites": 1,
+   "symbols": [
+    {
+     "defined_in": [
+      {
+       "file": "src/epsilon_a/a.py",
+       "line": 4,
+       "module": "epsilon_a.a"
+      }
+     ],
+     "imported_at": {
+      "file": "src/epsilon_b/b.py",
+      "line": 1
+     },
+     "resolved_in_imported_module": true,
+     "symbol": "AThing",
+     "via": "epsilon_a.a"
+    }
+   ],
+   "to": "epsilon-a",
+   "unresolved_symbols": []
+  },
+  {
+   "from": "mu-web",
+   "resolved_symbols": [
+    {
+     "defined_in": [
+      {
+       "file": "src/index.js",
+       "line": 1,
+       "module": "index"
+      }
+     ],
+     "imported_at": {
+      "file": "src/main.ts",
+      "line": 6
+     },
+     "resolved_in_imported_module": false,
+     "symbol": "helper",
+     "via": "gamma-lib"
+    }
+   ],
+   "sites": 1,
+   "symbols": [
+    {
+     "defined_in": [
+      {
+       "file": "src/index.js",
+       "line": 1,
+       "module": "index"
+      }
+     ],
+     "imported_at": {
+      "file": "src/main.ts",
+      "line": 6
+     },
+     "resolved_in_imported_module": false,
+     "symbol": "helper",
+     "via": "gamma-lib"
+    }
+   ],
+   "to": "gamma-lib",
+   "unresolved_symbols": []
+  },
+  {
+   "from": "tau-mono",
+   "resolved_symbols": [
+    {
+     "defined_in": [
+      {
+       "file": "src/index.js",
+       "line": 1,
+       "module": "index"
+      }
+     ],
+     "imported_at": {
+      "file": "packages/web/index.js",
+      "line": 1
+     },
+     "resolved_in_imported_module": false,
+     "symbol": "helper",
+     "via": "gamma-lib"
+    }
+   ],
+   "sites": 1,
+   "symbols": [
+    {
+     "defined_in": [
+      {
+       "file": "src/index.js",
+       "line": 1,
+       "module": "index"
+      }
+     ],
+     "imported_at": {
+      "file": "packages/web/index.js",
+      "line": 1
+     },
+     "resolved_in_imported_module": false,
+     "symbol": "helper",
+     "via": "gamma-lib"
+    }
+   ],
+   "to": "gamma-lib",
+   "unresolved_symbols": []
+  },
+  {
+   "from": "zeta-one",
+   "resolved_symbols": [
+    {
+     "defined_in": [
+      {
+       "file": "src/zeta_two/b.py",
+       "line": 4,
+       "module": "zeta_two.b"
+      }
+     ],
+     "imported_at": {
+      "file": "src/zeta_one/a.py",
+      "line": 1
+     },
+     "resolved_in_imported_module": true,
+     "symbol": "B2",
+     "via": "zeta_two.b"
+    }
+   ],
+   "sites": 1,
+   "symbols": [
+    {
+     "defined_in": [
+      {
+       "file": "src/zeta_two/b.py",
+       "line": 4,
+       "module": "zeta_two.b"
+      }
+     ],
+     "imported_at": {
+      "file": "src/zeta_one/a.py",
+      "line": 1
+     },
+     "resolved_in_imported_module": true,
+     "symbol": "B2",
+     "via": "zeta_two.b"
+    }
+   ],
+   "to": "zeta-two",
+   "unresolved_symbols": []
+  },
+  {
+   "from": "zeta-three",
+   "resolved_symbols": [
+    {
+     "defined_in": [
+      {
+       "file": "src/zeta_one/a.py",
+       "line": 4,
+       "module": "zeta_one.a"
+      }
+     ],
+     "imported_at": {
+      "file": "src/zeta_three/c.py",
+      "line": 1
+     },
+     "resolved_in_imported_module": true,
+     "symbol": "A1",
+     "via": "zeta_one.a"
+    }
+   ],
+   "sites": 1,
+   "symbols": [
+    {
+     "defined_in": [
+      {
+       "file": "src/zeta_one/a.py",
+       "line": 4,
+       "module": "zeta_one.a"
+      }
+     ],
+     "imported_at": {
+      "file": "src/zeta_three/c.py",
+      "line": 1
+     },
+     "resolved_in_imported_module": true,
+     "symbol": "A1",
+     "via": "zeta_one.a"
+    }
+   ],
+   "to": "zeta-one",
+   "unresolved_symbols": []
+  },
+  {
+   "from": "zeta-two",
+   "resolved_symbols": [
+    {
+     "defined_in": [
+      {
+       "file": "src/zeta_three/c.py",
+       "line": 4,
+       "module": "zeta_three.c"
+      }
+     ],
+     "imported_at": {
+      "file": "src/zeta_two/b.py",
+      "line": 1
+     },
+     "resolved_in_imported_module": true,
+     "symbol": "C3",
+     "via": "zeta_three.c"
+    }
+   ],
+   "sites": 1,
+   "symbols": [
+    {
+     "defined_in": [
+      {
+       "file": "src/zeta_three/c.py",
+       "line": 4,
+       "module": "zeta_three.c"
+      }
+     ],
+     "imported_at": {
+      "file": "src/zeta_two/b.py",
+      "line": 1
+     },
+     "resolved_in_imported_module": true,
+     "symbol": "C3",
+     "via": "zeta_three.c"
+    }
+   ],
+   "to": "zeta-three",
+   "unresolved_symbols": []
+  }
+ ],
+ "similar_pairs": [
+  {
+   "a": "lambda-web",
+   "b": "mu-web",
+   "score": 2.3514,
+   "shared_rare": [
+    "zustand"
+   ],
+   "shared_rare_count": 1,
+   "shared_total": 1,
+   "strongest": "zustand",
+   "strongest_df": 2
+  }
+ ]
+}

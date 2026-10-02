@@ -1,0 +1,7 @@
+{
+  "name": "@tau/web",
+  "version": "1.0.0",
+  "dependencies": {
+    "gamma-lib": "^1.0.0"
+  }
+}

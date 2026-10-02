@@ -1,0 +1,4 @@
+[project]
+name = "epsilon-b"
+version = "1.0.0"
+dependencies = ["epsilon-a"]
